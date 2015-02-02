@@ -10,6 +10,7 @@
 #
 
 materials="
+	wood	#6C4913 100
 	steel	#FFFFFF	130
 	copper	#F6A860	100
 	gold	#FFe900	130

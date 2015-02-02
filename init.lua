@@ -2,9 +2,9 @@
 local wrench_debug = false
 -- Hack to compute pitch based on eye position instead of feet position
 local eye_offset_hack = 1.7
--- Number of uses of a basic wench. The actual number may be slightly
+-- Number of uses of a steel wench. The actual number may be slightly
 -- lower, depending on how well this number divides 65535
-local wrench_uses_base = 450
+local wrench_uses_steel = 450
 local mod_name = "wrench"
 -- Choose recipe.
 --local craft_recipe = "beak_north"		-- conflicts with technic wrench
@@ -428,6 +428,13 @@ end
 -- "" is the initial mode - which is non-operational (i.e. does nothing)
 local wrench_modes = { [""]= "cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw" }
 local wrench_materials = {
+	-- Wooden wrench is extra - for players who have not mined metals yet
+	-- Its low usage count is intentional: to encourage players to craft metal wrenches
+	wood = {
+		description = "Wooden",
+		ingredient = "group:stick",
+		use_factor = 0.1
+		},
 	steel = {
 		description = "Steel",
 		ingredient = "default:steel_ingot",
@@ -436,12 +443,12 @@ local wrench_materials = {
 	copper = {
 		description = "Copper",
 		ingredient = "default:copper_ingot",
-		use_factor = 1.5
+		use_factor = 1.55
 		},
 	gold = {
 		description = "Gold",
 		ingredient = "default:gold_ingot",
-		use_factor = 2
+		use_factor = 2.1
 		},
 	}
 
