@@ -1,5 +1,5 @@
 
-local wrench_debug = false
+local wrench_debug = 0
 -- Hack to compute pitch based on eye position instead of feet position
 local eye_offset_hack = 1.7
 -- Number of uses of a steel wench. The actual number may be slightly
@@ -214,7 +214,7 @@ local function compute_wrench_orientation_codes()
 			node_or11n = rotate_node(node_or11n, mt_axis_spec.rot_cycle, true)
 		end
 	end
-	if wrench_debug then
+	if wrench_debug >= 2 then
 		local k,v
 		for k,v in pairs(mt_wrench_orientation_map) do
 			if type(k) == "string" then
@@ -246,7 +246,7 @@ local function precompute_clockwise_rotations()
 --			mt_clockwise_rotation_map[facing][mt_or11n] = 0
 --		end
 --	end
-	if wrench_debug then
+	if wrench_debug >= 2 then
 		local k0, v0
 		for k0,v0 in pairs(mt_clockwise_rotation_map) do
 			io.write(string.format("%-10s:", k0))
@@ -402,7 +402,7 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 	local old_param2 = node.param2
 	node.param2 = lookup_node_rotation(pos, old_param2, player, mode)
 
-	if wrench_debug then
+	if wrench_debug >= 1 then
 		minetest.chat_send_player(player:get_player_name(),
 				string.format("Node wrenched: axis %d, rot %d (%d) ->  axis: %d, rot: %d (%d)",
 					bit.band(bit.rshift(old_param2, 2), 0x7),
