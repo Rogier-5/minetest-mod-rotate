@@ -15,6 +15,7 @@ local craft_recipe = "beak_west"
 local alt_recipe = true				-- Register a second, alternate recipe
 
 local PI = math.atan2(0,-1)
+local mod_name_upper=string.upper(mod_name)
 
 local opposite = {
 	north = "south",
@@ -318,8 +319,8 @@ local function player_node_state(player, node_pos)
 	result.faced_side = quadrant_to_facing_map[string.format("%d,%d",hquadrant,vquadrant)]
 
 	if not result.faced_side or not result.facing_direction then
-		print(string.format("[WRENCH]: player_node_state: internal error: facing_direction = %s, faced_side=%s",
-			result.facing_direction, result.faced_side))
+		minetest.log("error",string.format("[%s]: player_node_state: internal error: facing_direction = %s, faced_side=%s",
+			mod_name_upper,result.facing_direction, result.faced_side))
 	end
 	return result
 end
