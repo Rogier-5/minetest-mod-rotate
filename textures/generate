@@ -1,0 +1,29 @@
+#! /bin/bash
+
+# Script to (re)generate most of the wrench images.
+# Requires imagemagick.
+#
+# Base images needed:
+#	- wrench_master_diagonal.png
+#	- wrench_master_horizontal.png
+# Both in grayscale colors.
+#
+
+materials="
+	steel	#FFFFFF	130
+	copper	#F6A860	100
+	gold	#FFe900	130
+	"
+
+echo "$materials" \
+| while read material color tint; do
+    if [ -z "$material" ]; then continue; fi
+    convert wrench_master_diagonal.png -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}.png"
+    convert wrench_master_horizontal.png -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}_left.png"
+    convert "wrench_${material}.png" -rotate -90 "wrench_${material}_cw.png"
+    convert "wrench_${material}_cw.png" -flop "wrench_${material}_ccw.png"
+    convert "wrench_${material}_left.png" -flop "wrench_${material}_right.png"
+    convert "wrench_${material}_left.png" -rotate -90 "wrench_${material}_down.png"
+    convert "wrench_${material}_right.png" -rotate -90 "wrench_${material}_up.png"
+done
+
