@@ -449,6 +449,7 @@ local function register_wrench(material, material_descr, uses, mode, next_mode)
 		groups = { not_in_creative_inventory = notcrea },
 		on_use = function(itemstack, player, pointed_thing)
 			if mode == "" then
+				minetest.chat_send_player(player:get_player_name(), "ALERT: Wrench is not configured yet. Right-click to set / cycle modes")
 				return
 			end
 			wrench_handler(itemstack, player, pointed_thing, mode, material, uses)
