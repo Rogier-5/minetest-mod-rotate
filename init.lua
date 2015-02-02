@@ -6,6 +6,13 @@ local eye_offset_hack = 1.7
 -- lower, depending on how well this number divides 65535
 local wrench_uses_base = 450
 local mod_name = "wrench"
+-- Choose recipe.
+--local craft_recipe = "beak_north"		-- conflicts with technic wrench
+--local craft_recipe = "beak_northwest"
+local craft_recipe = "beak_west"
+--local craft_recipe = "beak_southwest"
+--local craft_recipe = "beak_south"
+local alt_recipe = true				-- Register a second, alternate recipe
 
 local PI = math.atan2(0,-1)
 
@@ -466,22 +473,61 @@ local function register_wrench(material, material_descr, uses, mode, next_mode)
 	})
 end
 
+local function make_recipe(ingredient, dummy)
+	if craft_recipe == "beak_north" then
+		return {
+			{ingredient,	dummy,		ingredient},
+			{"",		ingredient,	""	},
+			{"",		ingredient,	""	},
+			}
+	elseif craft_recipe == "beak_northwest" then
+		return {
+			{dummy,		ingredient,	""	},
+			{ingredient,	ingredient,	""	},
+			{"",		"",		ingredient},
+			}
+	elseif craft_recipe == "beak_west" then
+		return {
+			{ingredient,	"",		""	},
+			{dummy,		ingredient,	ingredient},
+			{ingredient,	"",		""	},
+			}
+	elseif craft_recipe == "beak_southwest" then
+		return {
+			{"",		"",		ingredient},
+			{ingredient,	ingredient,	""	},
+			{dummy,		ingredient,	""	},
+			}
+	elseif craft_recipe == "beak_south" then
+		return {
+			{"",		ingredient,	""	},
+			{"",		ingredient,	""	},
+			{ingredient,	dummy,		ingredient},
+			}
+	else
+		error(string.format("[%s] unrecognised recipe selected: '%s'",mod_name_upper,craft_recipe))
+	end
+
+end
+
 local function register_all_wrenches()
 	local material, material_spec
 	for material, material_spec in pairs(wrench_materials) do
 		local mode, next_mode
 		for mode,next_mode in pairs(wrench_modes) do
-			register_wrench(material, material_spec.description, math.ceil(wrench_uses_base * material_spec.use_factor), mode, next_mode)
+			register_wrench(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
 		end
 
 		minetest.register_craft({
 			output = mod_name .. ":wrench_" .. material,
-			recipe = {
-				{material_spec.ingredient, "", material_spec.ingredient},
-				{"", material_spec.ingredient, ""},
-				{"", material_spec.ingredient, ""},
-			}
+			recipe = make_recipe(material_spec.ingredient, "")
 		})
+		if alt_recipe == true then
+			minetest.register_craft({
+				output = mod_name .. ":wrench_" .. material,
+				recipe = make_recipe(material_spec.ingredient, "group:wood")
+			})
+		end
 	end
 end
 
