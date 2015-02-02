@@ -362,7 +362,7 @@ local function repeated_rotation(player, node, pos)
 end
 
 -- Main rotation function
-local function wrench_handler(itemstack, player, pointed_thing, mode, wrench_uses)
+local function wrench_handler(itemstack, player, pointed_thing, mode, material, max_uses)
 
 	if pointed_thing.type ~= "node" then
 		return
@@ -406,7 +406,7 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, wrench_use
 	minetest.swap_node(pos, node)
 
 	if not creative_mode(player) and not repeated_rotation(player, node, pos) then
-		itemstack:add_wear(65535 / (wrench_uses - 1))
+		itemstack:add_wear(65535 / (max_uses - 1))
 	end
 
 	return itemstack
@@ -415,15 +415,25 @@ end
 -- Table of valid wrench modes, mapped to the next mode in the cycle
 -- "" is the initial mode - which is non-operational (i.e. does nothing)
 local wrench_modes = { [""]= "cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw" }
+local wrench_materials = {
+	steel = {
+		description = "Steel",
+		ingredient = "default:steel_ingot",
+		use_factor = 1
+		},
+--	copper = {
+--		description = "Copper",
+--		ingredient = "default:copper_ingot",
+--		use_factor = 1.5
+--		},
+--	gold = {
+--		description = "Gold",
+--		ingredient = "default:gold_ingot",
+--		use_factor = 2
+--		},
+	}
 
---
--- Setup / initialize wrench mod
---
-compute_wrench_orientation_codes()
-precompute_clockwise_rotations()
-
-local mode, next_mode
-for mode,next_mode in pairs(wrench_modes) do
+local function register_wrench(material, material_descr, uses, mode, next_mode)
 	local sep = "_"
 	local notcrea = 1
 	local descr_extra = "; "
@@ -432,31 +442,48 @@ for mode,next_mode in pairs(wrench_modes) do
 		notcrea = 0
 		descr_extra = ""
 	end
-	minetest.register_tool(mod_name .. ":wrench" .. sep .. mode, {
-		description = "Wrench (" .. mode .. descr_extra .. "left-click rotates, right-click cycles mode)",
-		wield_image = "wrench.png",
-		inventory_image = "wrench" .. sep .. mode ..".png",
+	minetest.register_tool(mod_name .. ":wrench_" .. material .. sep .. mode, {
+		description = material_descr .. " wrench (" .. mode .. descr_extra .. "left-click rotates, right-click cycles mode)",
+		wield_image = "wrench_" .. material .. ".png",
+		inventory_image = "wrench_" .. material .. sep .. mode ..".png",
 		groups = { not_in_creative_inventory = notcrea },
 		on_use = function(itemstack, player, pointed_thing)
 			if mode == "" then
 				return
 			end
-			wrench_handler(itemstack, player, pointed_thing, mode, wrench_uses_base)
+			wrench_handler(itemstack, player, pointed_thing, mode, material, uses)
 			return itemstack
 		end,
 		on_place = function(itemstack, player, pointed_thing)
-			itemstack:set_name(mod_name .. ":wrench" .. "_" .. next_mode)
+			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. next_mode)
 			return itemstack
 		end,
 	})
 end
 
-minetest.register_craft({
-	output = mod_name .. ":wrench",
-	recipe = {
-		{"default:steel_ingot", "", "default:steel_ingot"},
-		{"", "default:steel_ingot", ""},
-		{"", "default:steel_ingot", ""},
-	}
-})
+local function register_all_wrenches()
+	local material, material_spec
+	for material, material_spec in pairs(wrench_materials) do
+		local mode, next_mode
+		for mode,next_mode in pairs(wrench_modes) do
+			register_wrench(material, material_spec.description, (wrench_uses_base * material_spec.use_factor), mode, next_mode)
+		end
+
+		minetest.register_craft({
+			output = mod_name .. ":wrench_" .. material,
+			recipe = {
+				{material_spec.ingredient, "", material_spec.ingredient},
+				{"", material_spec.ingredient, ""},
+				{"", material_spec.ingredient, ""},
+			}
+		})
+	end
+end
+
+--
+-- Setup / initialize wrench mod
+--
+compute_wrench_orientation_codes()
+precompute_clockwise_rotations()
+register_all_wrenches()
 
