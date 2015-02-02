@@ -421,16 +421,16 @@ local wrench_materials = {
 		ingredient = "default:steel_ingot",
 		use_factor = 1
 		},
---	copper = {
---		description = "Copper",
---		ingredient = "default:copper_ingot",
---		use_factor = 1.5
---		},
---	gold = {
---		description = "Gold",
---		ingredient = "default:gold_ingot",
---		use_factor = 2
---		},
+	copper = {
+		description = "Copper",
+		ingredient = "default:copper_ingot",
+		use_factor = 1.5
+		},
+	gold = {
+		description = "Gold",
+		ingredient = "default:gold_ingot",
+		use_factor = 2
+		},
 	}
 
 local function register_wrench(material, material_descr, uses, mode, next_mode)
