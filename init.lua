@@ -2,6 +2,8 @@
 local wrench_debug = false
 -- Hack to compute pitch based on eye position instead of feet position
 local eye_offset_hack = 1.7
+-- Number of uses of a basic wench. The actual number may be slightly
+-- lower, depending on how well this number divides 65535
 local wrench_uses_base = 450
 local mod_name = "wrench"
 
@@ -406,7 +408,9 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 	minetest.swap_node(pos, node)
 
 	if not creative_mode(player) and not repeated_rotation(player, node, pos) then
-		itemstack:add_wear(65535 / (max_uses - 1))
+		-- 'ceil' ensures that the minimum wear is *always* 1
+		-- (and makes the tools wear a tiny bit faster)
+		itemstack:add_wear(math.ceil(65535 / max_uses))
 	end
 
 	return itemstack
@@ -467,7 +471,7 @@ local function register_all_wrenches()
 	for material, material_spec in pairs(wrench_materials) do
 		local mode, next_mode
 		for mode,next_mode in pairs(wrench_modes) do
-			register_wrench(material, material_spec.description, (wrench_uses_base * material_spec.use_factor), mode, next_mode)
+			register_wrench(material, material_spec.description, math.ceil(wrench_uses_base * material_spec.use_factor), mode, next_mode)
 		end
 
 		minetest.register_craft({
