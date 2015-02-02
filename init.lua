@@ -387,9 +387,9 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 
 	local node = minetest.get_node(pos)
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef or not ndef.paramtype2 == "facedir" or
+	if not ndef or ndef.paramtype2 ~= "facedir" or
 			(ndef.drawtype == "nodebox" and
-			not ndef.node_box.type == "fixed") or
+			ndef.node_box.type ~= "fixed") or
 			node.param2 == nil then
 		return
 	end
