@@ -388,6 +388,28 @@ local function repeated_rotation(player, node, pos)
 		and new_history.node_pos.z == old_history.node_pos.z
 end
 
+local function get_node_orientation(itemstack, player, pointed_thing)
+	if pointed_thing.type ~= "node" then
+		return
+	end
+
+	local pos = pointed_thing.under
+
+	local node = minetest.get_node(pos)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef or ndef.paramtype2 ~= "facedir" or
+			(ndef.drawtype == "nodebox" and
+			ndef.node_box.type ~= "fixed") or
+			node.param2 == nil then
+		return "00"
+	else
+		local param2 = node.param2
+		local axis = bit.band(bit.rshift(param2, 2), 0x7)
+		local rot = bit.band(param2, 0x3)
+		return string.format("%d%d",axis,rot)
+	end
+end
+
 -- Main rotation function
 local function wrench_handler(itemstack, player, pointed_thing, mode, material, max_uses)
 
@@ -417,7 +439,13 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 
 	-- Set param2
 	local old_param2 = node.param2
-	node.param2 = lookup_node_rotation(pointed_thing, old_param2, player, mode)
+	if string.match(mode, "[0-9]") then
+		local axis = tonumber(string.sub(mode, 1, 1))
+		local rot = tonumber(string.sub(mode, 2, 2))
+		node.param2 = bit.bor(bit.lshift(axis, 2), rot)
+	else
+		node.param2 = lookup_node_rotation(pointed_thing, old_param2, player, mode)
+	end
 
 	if wrench_debug >= 1 then
 		minetest.chat_send_player(player:get_player_name(),
@@ -443,7 +471,15 @@ end
 
 -- Table of valid wrench modes, mapped to the next mode in the cycle
 -- "" is the initial mode - which is non-operational (i.e. does nothing)
-local wrench_modes = { [""]= "cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw" }
+local wrench_modes = {
+	[""]="cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw",
+	["00"]="00", ["01"]="01", ["02"]="02", ["03"]="03",
+	["10"]="10", ["11"]="11", ["12"]="12", ["13"]="13",
+	["20"]="00", ["21"]="21", ["22"]="22", ["23"]="23",
+	["30"]="30", ["31"]="31", ["32"]="32", ["33"]="33",
+	["40"]="40", ["41"]="41", ["42"]="42", ["43"]="43",
+	["50"]="50", ["51"]="51", ["52"]="52", ["53"]="53",
+	}
 local wrench_materials = {
 	-- Wooden wrench is extra - for players who have not mined metals yet
 	-- Its low usage count is intentional: to encourage players to craft metal wrenches
@@ -470,7 +506,7 @@ local wrench_materials = {
 		},
 	}
 
-local function register_wrench(material, material_descr, uses, mode, next_mode)
+local function register_wrench_rotating(material, material_descr, uses, mode, next_mode)
 	local sep = "_"
 	local notcrea = 1
 	local descr_extra = "; "
@@ -483,7 +519,7 @@ local function register_wrench(material, material_descr, uses, mode, next_mode)
 		description = material_descr .. " wrench (" .. mode .. descr_extra .. "left-click rotates, right-click cycles mode)",
 		wield_image = "wrench_" .. material .. ".png",
 		inventory_image = "wrench_" .. material .. sep .. mode ..".png",
-		groups = { not_in_creative_inventory = notcrea },
+		groups = { wrench = 1, ["wrench_"..material.."_rot"] = 1, not_in_creative_inventory = notcrea },
 		on_use = function(itemstack, player, pointed_thing)
 			if mode == "" then
 				minetest.chat_send_player(player:get_player_name(), "ALERT: Wrench is not configured yet. Right-click to set / cycle modes")
@@ -494,6 +530,32 @@ local function register_wrench(material, material_descr, uses, mode, next_mode)
 		end,
 		on_place = function(itemstack, player, pointed_thing)
 			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. next_mode)
+			return itemstack
+		end,
+	})
+end
+
+local function register_wrench_positioning(material, material_descr, uses, mode)
+	local notcrea = 1
+	if mode == "00" then
+		notcrea = 0
+	end
+	local wrench_image = "wrench_" .. material ..".png"
+	local axis_image = "wrench_axismode_" .. string.sub(mode, 1, 1) .. ".png"
+	local rotation_image = "wrench_rotmode_" .. string.sub(mode, 2, 2) .. ".png"
+
+	minetest.register_tool(mod_name .. ":wrench_" .. material .. "_" .. mode, {
+		description = material_descr .. " wrench (" .. mode .. "; left-click positions, right-click sets mode)",
+		wield_image = "wrench_" .. material .. ".png",
+		inventory_image = wrench_image .. "^" .. axis_image .. "^" .. rotation_image,
+		groups = { wrench = 1, ["wrench_"..material.."_pos"] = 1, not_in_creative_inventory = notcrea },
+		on_use = function(itemstack, player, pointed_thing)
+			wrench_handler(itemstack, player, pointed_thing, mode, material, uses)
+			return itemstack
+		end,
+		on_place = function(itemstack, player, pointed_thing)
+			local new_mode = get_node_orientation(itemstack, player, pointed_thing)
+			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. new_mode)
 			return itemstack
 		end,
 	})
@@ -542,7 +604,11 @@ local function register_all_wrenches()
 		if not material_spec.disabled then
 			local mode, next_mode
 			for mode,next_mode in pairs(wrench_modes) do
-				register_wrench(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
+				if string.match(mode, "[0-9]") then
+					register_wrench_positioning(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode)
+				else
+					register_wrench_rotating(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
+				end
 			end
 
 			minetest.register_craft({
@@ -554,11 +620,39 @@ local function register_all_wrenches()
 					output = mod_name .. ":wrench_" .. material,
 					recipe = make_recipe(material_spec.ingredient, "group:wood")
 				})
+			-- Convert rotating wrench to positioning wrench
+			minetest.register_craft({
+				output = mod_name .. ":wrench_" .. material .. "_00",
+				recipe = {{"group:wrench_" .. material .. "_rot"}},
+				})
+			-- Convert positioning wrench to rotating wrench
+			minetest.register_craft({
+				output = mod_name .. ":wrench_" .. material,
+				recipe = {{"group:wrench_" .. material .. "_pos"}},
+				})
 			end
 		end
 	end
-end
 
+	-- When crafting a wrench from a wrench, keep its wear...
+	minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
+						if string.find(itemstack:get_name(), mod_name..":wrench_", 1, true) then
+							local i, ingredient
+							for i = 1, 9 do
+								if old_craft_grid[i]:get_count() > 0 then
+									if ingredient == nil then
+										ingredient = old_craft_grid[i]
+									else
+										return
+									end
+								end
+							end
+							if string.find(ingredient:get_name(), mod_name..":wrench_", 1, true) then
+								itemstack:set_wear(ingredient:get_wear())
+							end
+						end
+					end)
+end
 --
 -- Setup / initialize wrench mod
 --
