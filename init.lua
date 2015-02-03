@@ -5,6 +5,7 @@ local eye_offset_hack = 1.7
 -- Number of uses of a steel wench. The actual number may be slightly
 -- lower, depending on how well this number divides 65535
 local wrench_uses_steel = 450
+local disable_wooden_wrench = true
 local mod_name = "wrench"
 -- Choose recipe.
 --local craft_recipe = "beak_north"		-- conflicts with technic wrench
@@ -433,22 +434,23 @@ local wrench_materials = {
 	wood = {
 		description = "Wooden",
 		ingredient = "group:stick",
-		use_factor = 0.1
+		use_factor = 0.1,
+		disabled = disable_wooden_wrench,
 		},
 	steel = {
 		description = "Steel",
 		ingredient = "default:steel_ingot",
-		use_factor = 1
+		use_factor = 1,
 		},
 	copper = {
 		description = "Copper",
 		ingredient = "default:copper_ingot",
-		use_factor = 1.55
+		use_factor = 1.55,
 		},
 	gold = {
 		description = "Gold",
 		ingredient = "default:gold_ingot",
-		use_factor = 2.1
+		use_factor = 2.1,
 		},
 	}
 
@@ -521,20 +523,22 @@ end
 local function register_all_wrenches()
 	local material, material_spec
 	for material, material_spec in pairs(wrench_materials) do
-		local mode, next_mode
-		for mode,next_mode in pairs(wrench_modes) do
-			register_wrench(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
-		end
+		if not material_spec.disabled then
+			local mode, next_mode
+			for mode,next_mode in pairs(wrench_modes) do
+				register_wrench(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
+			end
 
-		minetest.register_craft({
-			output = mod_name .. ":wrench_" .. material,
-			recipe = make_recipe(material_spec.ingredient, "")
-		})
-		if alt_recipe == true then
 			minetest.register_craft({
 				output = mod_name .. ":wrench_" .. material,
-				recipe = make_recipe(material_spec.ingredient, "group:wood")
-			})
+				recipe = make_recipe(material_spec.ingredient, "")
+				})
+			if alt_recipe == true then
+				minetest.register_craft({
+					output = mod_name .. ":wrench_" .. material,
+					recipe = make_recipe(material_spec.ingredient, "group:wood")
+				})
+			end
 		end
 	end
 end
