@@ -291,15 +291,26 @@ local quadrant_to_facing_map = {
 	["2,1"] = "down",
 	}
 
--- Given a node's position and a player, compute:
+local dpos_to_pointing_map = {
+	["-1,0,0"] = "west",
+	["0,-1,0"] = "down",
+	["0,0,-1"] = "south",
+	["1,0,0"] = "east",
+	["0,1,0"] = "up",
+	["0,0,1"] = "north",
+	}
+
+-- Given a pointed thing and a player, compute:
 -- - the compass direction (NESW) the player is facing
--- - which side of the node the player is faacing most
+-- - which side of the 'under' node the player is facing most
+-- - which side of the 'under' node the player is pointing at
 -- return:
--- { facing_direction = <direction (NESW)>, faced_side = <direction (NESWUD)> }
-local function player_node_state(player, node_pos)
+-- { facing_direction = <direction (NESW)>, faced_side = <direction (NESWUD)>, pointed_side = <direction (NESWUD)> }
+local function player_node_state(player, pointed_thing)
 	local c
 	local v
 	local player_pos = player:getpos()
+	local node_pos = pointed_thing.under
 
 	-- TODO: compute pitch based on actual eye position (is that possible at all ??)
 	player_pos.y = player_pos.y + eye_offset_hack
@@ -319,9 +330,14 @@ local function player_node_state(player, node_pos)
 	local vquadrant = math.floor((pitch + (PI/4)) / (PI/2))
 	result.faced_side = quadrant_to_facing_map[string.format("%d,%d",hquadrant,vquadrant)]
 
-	if not result.faced_side or not result.facing_direction then
-		minetest.log("error",string.format("[%s]: player_node_state: internal error: facing_direction = %s, faced_side=%s",
-			mod_name_upper,result.facing_direction, result.faced_side))
+	-- Compute pointed side of the node
+	local node_pos2 = pointed_thing.above
+	local dpos = {x = node_pos2.x-node_pos.x, y = node_pos2.y-node_pos.y, z = node_pos2.z-node_pos.z}
+	result.pointed_side = dpos_to_pointing_map[string.format("%d,%d,%d", dpos.x, dpos.y, dpos.z)]
+
+	if not result.faced_side or not result.facing_direction or not result.pointed_side then
+		minetest.log("error",string.format("[%s]: player_node_state: internal error: facing_direction = %s, faced_side=%s, pointed_side=%s",
+			mod_name_upper,result.facing_direction, result.faced_side, result.pointed_side))
 	end
 	return result
 end
@@ -330,9 +346,9 @@ end
 -- direction, lookup the equivalent clockwise rotation side of the node.
 -- i.e. the side of the node, that will rotate clockwise.
 local function clockwise_rotation_side(state, rotation)
-	local rot_side = state.faced_side
+	local rot_side = state.pointed_side
 	if rotation ~= "cw" then
-		rot_side = rotation_specifications[state.faced_side][rotation]
+		rot_side = rotation_specifications[rot_side][rotation]
 		if type(rot_side) == "table" then
 			rot_side = rot_side[state.facing_direction]
 		end
@@ -341,8 +357,8 @@ local function clockwise_rotation_side(state, rotation)
 end
 
 -- Perform the actual rotation lookup. Pretty straightforward...
-local function lookup_node_rotation(node_pos, old_orientation, player, rotation)
-	local state = player_node_state(player, node_pos)
+local function lookup_node_rotation(pointed_thing, old_orientation, player, rotation)
+	local state = player_node_state(player, pointed_thing)
 	local clockwise_side = clockwise_rotation_side(state, rotation)
 	return mt_clockwise_rotation_map[clockwise_side][old_orientation]
 end
@@ -401,7 +417,7 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 
 	-- Set param2
 	local old_param2 = node.param2
-	node.param2 = lookup_node_rotation(pos, old_param2, player, mode)
+	node.param2 = lookup_node_rotation(pointed_thing, old_param2, player, mode)
 
 	if wrench_debug >= 1 then
 		minetest.chat_send_player(player:get_player_name(),
