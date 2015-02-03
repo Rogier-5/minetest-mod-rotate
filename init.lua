@@ -334,7 +334,7 @@ local function clockwise_rotation_side(state, rotation)
 	if rotation ~= "cw" then
 		rot_side = rotation_specifications[state.faced_side][rotation]
 		if type(rot_side) == "table" then
-			rot_side = rotation_specifications[state.facing_direction]
+			rot_side = rot_side[state.facing_direction]
 		end
 	end
 	return rot_side
