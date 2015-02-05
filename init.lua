@@ -6,7 +6,7 @@ local eye_offset_hack = 1.7
 -- lower, depending on how well this number divides 65535
 local wrench_uses_steel = 450
 local disable_wooden_wrench = true
-local mod_name = "wrench"
+local mod_name = "rotate"
 -- Choose recipe.
 --local craft_recipe = "beak_north"		-- conflicts with technic wrench
 --local craft_recipe = "beak_northwest"
@@ -473,6 +473,7 @@ end
 -- "" is the initial mode - which is non-operational (i.e. does nothing)
 local wrench_modes = {
 	[""]="cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw",
+	-- For the following, there exists no 'next mode'
 	["00"]="00", ["01"]="01", ["02"]="02", ["03"]="03",
 	["10"]="10", ["11"]="11", ["12"]="12", ["13"]="13",
 	["20"]="00", ["21"]="21", ["22"]="22", ["23"]="23",
@@ -481,12 +482,13 @@ local wrench_modes = {
 	["50"]="50", ["51"]="51", ["52"]="52", ["53"]="53",
 	}
 local wrench_materials = {
-	-- Wooden wrench is extra - for players who have not mined metals yet
-	-- Its low usage count is intentional: to encourage players to craft metal wrenches
+	-- Wooden wrench is an extra - for players who have not mined metals yet
+	-- Its low usage count is intentional: it is dirt-cheap, and they shouldn't
+	-- be needed anyway.
 	wood = {
 		description = "Wooden",
 		ingredient = "group:stick",
-		use_factor = 0.1,
+		use_factor = 10/wrench_uses_steel,
 		disabled = disable_wooden_wrench,
 		},
 	steel = {
