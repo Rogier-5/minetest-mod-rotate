@@ -1,0 +1,54 @@
+This wrench (not to be confused with the technic wrench) makes the rotating
+of nodes much more intuitive.
+
+It has two major modes of operation:
+1) Rotation mode.
+	In this mode, when punching a node, the node is rotated 90 degrees, the
+	direction depending on the selected sub-mode. The following sub-modes are
+	available:
+	- clock-wise: rotate the node so that the punched side rotates clockwise
+	- counter-clock-wise: rotate the node so that the punched side rotates counter-clockwise
+	- left: rotate the node so that the punched side moves to the left
+	- right: rotate the node so that the punched side moves to the right
+	- up: rotate the node so that the punched side moves upwards
+	- down: rotate the node so that the punched side moves downwards
+
+	The desired sub-mode is selected by right-clicking. With the mode, the picture
+	of the wrench changes to indicate which mode is selected.
+
+	As multiple rotations are most likely needed to correctly position a node,
+	subsequent rotations of the same node do not add additional wear to the wrench.
+	Punching 2 nodes alternatingly *does* add wear on every punch.
+
+2) Positioning mode.
+	In this mode, when punching a node, the node is rotated to a preconfigured
+	orientation. I.e. whatever the initial orientation of nodes, after punching
+	they will have the same orientation.
+
+	This mode is selected by crafting a wrench into positioning mode. It can then
+	be crafted back into rotation mode.
+
+	The desired position is configured by right-clicking any node, which configures
+	the wrench to the current orientation of the clicked-node. For most regular nodes,
+	which don't have an orientation, this resets to the default orientation.
+
+	The selected position is indicated graphically in the top-right of the image.
+	On the left, 6 positions indicate the rotation axis direction: pointing up, north,
+	south, east, west, down.
+	On the right, 4 positions indicate the rotation round that axis: 0, 90, 180, 270
+	degrees respectively.
+
+The wrench comes in four versions: wooden (optional), steel, copper, gold. The wooden
+wrench is exceptionally cheap, and wears very fast (approx. 10 uses). The steel wrench
+has approx 450 uses, the copper wrench approx. 1.5 times as many, the golden wrench
+approx 2 times as many. The number of uses of the steel wrench can be configured,
+automatically changing those of the copper and gold wrenches as well (but note that
+wrenches are expensive: they require 4 ingots).
+
+Every wrench has two crafting recipies (in case the main one conflicts with another mod).
+requiring 4 ingots (or 4 sticks), and one extra planks for the alternate recipe
+
+The operation of the wrench has been optimized: all required information is precomputed
+at startup. Actual operation of a wrench basically requires just a few table lookups.
+
+
