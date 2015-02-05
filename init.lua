@@ -122,8 +122,8 @@ local rotation_specifications = {
 	down = {
 		cw =	{north="west", west="south", south="east", east="north"},
 		ccw =	"up",
-		up =	{north="west", west="south", south="east", east="north"},
-		down =	{north="east", east="south", south="west", west="north"},
+		up =	{north="east", east="south", south="west", west="north"},
+		down =	{north="west", west="south", south="east", east="north"},
 		left =	{north="south", east="west", south="north", west="east"},
 		right =	{north="north", east="east", south="south", west="west"},
 		},
