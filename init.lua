@@ -433,10 +433,6 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 		return
 	end
 
-	if ndef.can_dig and not ndef.can_dig(pos, player) then
-		return
-	end
-
 	-- Set param2
 	local old_param2 = node.param2
 	if string.match(mode, "[0-9]") then
