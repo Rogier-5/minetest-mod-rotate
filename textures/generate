@@ -28,27 +28,34 @@ echo "$materials" \
     convert "wrench_${material}_right.png" -rotate -90 "wrench_${material}_up.png"
 done
 
-b=8
-l=200
-for axismode in 0 1 2 3 4 5; do
-    convert \
-	-size 18x18 \
-	-matte \
-	"xc:RGBA(0,0,0,0)" \
-	-fill "RGB($b,$b,$b)" \
-	-draw "line 15,1 15,6" \
-	-fill "RGB($l,$b,$b)" \
-	-draw "point 15,$((axismode + 1))" \
-	"wrench_axismode_${axismode}.png"
-done
-for rotmode in 0 1 2 3 4 5; do
-    convert \
-	-size 18x18 \
-	-matte \
-	"xc:RGBA(0,0,0,0)" \
-	-fill "RGB($b,$b,$b)" \
-	-draw "line 16,1 16,4" \
-	-fill "RGB($l,$b,$b)" \
-	-draw "point 16,$((rotmode + 1))" \
-	"wrench_rotmode_${rotmode}.png"
+black=8
+modes="
+	apos	RGB(200,8,8)
+	rpos	RGB(48,48,255)
+	"
+echo "$modes" \
+| while read mode rgb; do
+    if [ -z "$mode" ]; then continue; fi
+    for axismode in 0 1 2 3 4 5; do
+	convert \
+	    -size 18x18 \
+	    -matte \
+	    "xc:RGBA(0,0,0,0)" \
+	    -fill "RGB($black,$black,$black)" \
+	    -draw "line 15,1 15,6" \
+	    -fill "$rgb" \
+	    -draw "point 15,$((axismode + 1))" \
+	    "wrench_axismode_${axismode}_${mode}.png"
+    done
+    for rotmode in 0 1 2 3 4 5; do
+	convert \
+	    -size 18x18 \
+	    -matte \
+	    "xc:RGBA(0,0,0,0)" \
+	    -fill "RGB($black,$black,$black)" \
+	    -draw "line 16,1 16,4" \
+	    -fill "$rgb" \
+	    -draw "point 16,$((rotmode + 1))" \
+	    "wrench_rotmode_${rotmode}_${mode}.png"
+    done
 done

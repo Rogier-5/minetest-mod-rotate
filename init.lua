@@ -193,6 +193,48 @@ local mt_wrench_orientation_map = {}
 -- (contents are computed at startup)
 local mt_clockwise_rotation_map = {}
 
+-- Mapping of minetest orientation to north-based orientation
+-- (e.g. a block seen from the east looks identical to the same
+--       block, seen from the north, after rotating it left)
+local mt_orientation_to_facing = {
+	north = "none",
+	south = "reverse",
+	east = "right",
+	west = "left",
+	up = {
+		north = { "cw", "cw", "up" },
+		south = "down",
+		east = { "cw", "left" },
+		west = { "ccw", "right" },
+		},
+	down = {
+		north = { "cw", "cw", "down" },
+		south = "up",
+		east = { "ccw", "left" },
+		west = { "cw", "right" },
+		},
+	}
+
+-- Reverse mapping of mt_orientation_to_facing
+local facing_orientation_to_mt = {
+	north = "none",
+	south = "reverse",
+	east = "left",
+	west = "right",
+	up = {
+		north = { "down", "cw", "cw" },
+		south = "up",
+		east = { "right", "ccw" },
+		west = { "left", "cw" },
+		},
+	down = {
+		north = { "up", "cw", "cw" },
+		south = "down",
+		east = { "right", "cw" },
+		west = { "left", "ccw" },
+		},
+	}
+
 -- Table of nodes previously rotated by users.
 -- (used to avoid wearing the tool for multiple consecutive rotations of the same node)
 local player_rotation_history = {}
@@ -356,6 +398,48 @@ local function clockwise_rotation_side(state, rotation)
 	return rot_side
 end
 
+local function mt_to_relative_orientation(state, orientation)
+	local rotate = mt_orientation_to_facing[state.pointed_side]
+	if type(rotate) == "table" then
+		rotate = rotate[state.facing_direction]
+	end
+	if rotate == "none" then
+		rotate = {}
+	elseif rotate == "reverse" then
+		rotate = {"left", "left"}
+	elseif type(rotate) ~= "table" then
+		rotate = {rotate}
+	end
+	local step
+	for _,step in ipairs(rotate) do
+		local clockwise_side
+		clockwise_side = clockwise_rotation_side(state, step)
+		orientation = mt_clockwise_rotation_map[clockwise_side][orientation]
+	end
+	return orientation
+end
+
+local function relative_to_mt_orientation(state, orientation)
+	local rotate = facing_orientation_to_mt[state.pointed_side]
+	if type(rotate) == "table" then
+	    rotate = rotate[state.facing_direction]
+	end
+	if rotate == "none" then
+		rotate = {}
+	elseif rotate == "reverse" then
+		rotate = {"left", "left"}
+	elseif type(rotate) ~= "table" then
+		rotate = {rotate}
+	end
+	local step
+	for _,step in ipairs(rotate) do
+		local clockwise_side
+		clockwise_side = clockwise_rotation_side(state, step)
+		orientation = mt_clockwise_rotation_map[clockwise_side][orientation]
+	end
+	return orientation
+end
+
 -- Perform the actual rotation lookup. Pretty straightforward...
 local function lookup_node_rotation(pointed_thing, old_orientation, player, rotation)
 	local state = player_node_state(player, pointed_thing)
@@ -388,7 +472,7 @@ local function repeated_rotation(player, node, pos)
 		and new_history.node_pos.z == old_history.node_pos.z
 end
 
-local function get_node_orientation(itemstack, player, pointed_thing)
+local function get_node_absolute_orientation_mode(pointed_thing)
 	if pointed_thing.type ~= "node" then
 		return
 	end
@@ -406,7 +490,31 @@ local function get_node_orientation(itemstack, player, pointed_thing)
 		local param2 = node.param2
 		local axis = bit.band(bit.rshift(param2, 2), 0x7)
 		local rot = bit.band(param2, 0x3)
-		return string.format("%d%d",axis,rot)
+		return string.format("a%d%d",axis,rot)
+	end
+end
+
+local function get_node_relative_orientation_mode(player, pointed_thing)
+	if pointed_thing.type ~= "node" then
+		return
+	end
+
+	local pos = pointed_thing.under
+
+	local node = minetest.get_node(pos)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef or ndef.paramtype2 ~= "facedir" or
+			(ndef.drawtype == "nodebox" and
+			ndef.node_box.type ~= "fixed") or
+			node.param2 == nil then
+		return "00"
+	else
+		local param2 = node.param2
+		local state = player_node_state(player, pointed_thing)
+		local relative = mt_to_relative_orientation(state, param2)
+		local axis = bit.band(bit.rshift(relative, 2), 0x7)
+		local rot = bit.band(relative, 0x3)
+		return string.format("r%d%d",axis,rot)
 	end
 end
 
@@ -436,9 +544,18 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 	-- Set param2
 	local old_param2 = node.param2
 	if string.match(mode, "[0-9]") then
-		local axis = tonumber(string.sub(mode, 1, 1))
-		local rot = tonumber(string.sub(mode, 2, 2))
-		node.param2 = bit.bor(bit.lshift(axis, 2), rot)
+		local axis = tonumber(string.sub(mode, 2, 2))
+		local rot = tonumber(string.sub(mode, 3, 3))
+		local orientation = bit.bor(bit.lshift(axis, 2), rot)
+		if string.sub(mode, 1, 1) == "a" then
+		    node.param2 = orientation
+		elseif string.sub(mode, 1, 1) == "r" then
+		    local state = player_node_state(player, pointed_thing)
+		    node.param2 = relative_to_mt_orientation(state, orientation)
+		else
+		    minetest.log("error", "Internal error: wrench has unrecognised mode ("..mode..")")
+		    node.param2 = 0
+		end
 	else
 		node.param2 = lookup_node_rotation(pointed_thing, old_param2, player, mode)
 	end
@@ -470,12 +587,18 @@ end
 local wrench_modes = {
 	[""]="cw", cw="ccw", ccw="right", right="left", left="up", up="down", down="cw",
 	-- For the following, there exists no 'next mode'
-	["00"]="00", ["01"]="01", ["02"]="02", ["03"]="03",
-	["10"]="10", ["11"]="11", ["12"]="12", ["13"]="13",
-	["20"]="00", ["21"]="21", ["22"]="22", ["23"]="23",
-	["30"]="30", ["31"]="31", ["32"]="32", ["33"]="33",
-	["40"]="40", ["41"]="41", ["42"]="42", ["43"]="43",
-	["50"]="50", ["51"]="51", ["52"]="52", ["53"]="53",
+	["a00"]="a00", ["a01"]="a01", ["a02"]="a02", ["a03"]="a03",
+	["a10"]="a10", ["a11"]="a11", ["a12"]="a12", ["a13"]="a13",
+	["a20"]="a00", ["a21"]="a21", ["a22"]="a22", ["a23"]="a23",
+	["a30"]="a30", ["a31"]="a31", ["a32"]="a32", ["a33"]="a33",
+	["a40"]="a40", ["a41"]="a41", ["a42"]="a42", ["a43"]="a43",
+	["a50"]="a50", ["a51"]="a51", ["a52"]="a52", ["a53"]="a53",
+	["r00"]="r00", ["r01"]="r01", ["r02"]="r02", ["r03"]="r03",
+	["r10"]="r10", ["r11"]="r11", ["r12"]="r12", ["r13"]="r13",
+	["r20"]="r00", ["r21"]="r21", ["r22"]="r22", ["r23"]="r23",
+	["r30"]="r30", ["r31"]="r31", ["r32"]="r32", ["r33"]="r33",
+	["r40"]="r40", ["r41"]="r41", ["r42"]="r42", ["r43"]="r43",
+	["r50"]="r50", ["r51"]="r51", ["r52"]="r52", ["r53"]="r53",
 	}
 local wrench_materials = {
 	-- Wooden wrench is an extra - for players who have not mined metals yet
@@ -535,24 +658,29 @@ end
 
 local function register_wrench_positioning(material, material_descr, uses, mode)
 	local notcrea = 1
-	if mode == "00" then
+	if mode == "a00" or mode == "r00" then
 		notcrea = 0
 	end
 	local wrench_image = "wrench_" .. material ..".png"
-	local axis_image = "wrench_axismode_" .. string.sub(mode, 1, 1) .. ".png"
-	local rotation_image = "wrench_rotmode_" .. string.sub(mode, 2, 2) .. ".png"
+	local axis_image = "wrench_axismode_" .. string.sub(mode, 2, 2) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
+	local rotation_image = "wrench_rotmode_" .. string.sub(mode, 3, 3) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
 
 	minetest.register_tool(mod_name .. ":wrench_" .. material .. "_" .. mode, {
 		description = material_descr .. " wrench (" .. mode .. "; left-click positions, right-click sets mode)",
 		wield_image = "wrench_" .. material .. ".png",
 		inventory_image = wrench_image .. "^" .. axis_image .. "^" .. rotation_image,
-		groups = { wrench = 1, ["wrench_"..material.."_pos"] = 1, not_in_creative_inventory = notcrea },
+		groups = { wrench = 1, ["wrench_"..material.."_"..string.sub(mode,1,1).."pos"] = 1, not_in_creative_inventory = notcrea },
 		on_use = function(itemstack, player, pointed_thing)
 			wrench_handler(itemstack, player, pointed_thing, mode, material, uses)
 			return itemstack
 		end,
 		on_place = function(itemstack, player, pointed_thing)
-			local new_mode = get_node_orientation(itemstack, player, pointed_thing)
+			local new_mode
+			if string.sub(mode,1,1) == "r" then
+			    new_mode = get_node_relative_orientation_mode(player, pointed_thing)
+			else
+			    new_mode = get_node_absolute_orientation_mode(pointed_thing)
+			end
 			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. new_mode)
 			return itemstack
 		end,
@@ -618,15 +746,20 @@ local function register_all_wrenches()
 					output = mod_name .. ":wrench_" .. material,
 					recipe = make_recipe(material_spec.ingredient, "group:wood")
 				})
-			-- Convert rotating wrench to positioning wrench
+			-- Convert rotating wrench to positioning wrench (relative mode)
 			minetest.register_craft({
-				output = mod_name .. ":wrench_" .. material .. "_00",
+				output = mod_name .. ":wrench_" .. material .. "_r00",
 				recipe = {{"group:wrench_" .. material .. "_rot"}},
 				})
-			-- Convert positioning wrench to rotating wrench
+			-- Convert positioning wrench (relative mode) to positioning wrench (absolute mode)
+			minetest.register_craft({
+				output = mod_name .. ":wrench_" .. material .. "_a00",
+				recipe = {{"group:wrench_" .. material .. "_rpos"}},
+				})
+			-- Convert positioning wrench (absolute mode) to rotating wrench
 			minetest.register_craft({
 				output = mod_name .. ":wrench_" .. material,
-				recipe = {{"group:wrench_" .. material .. "_pos"}},
+				recipe = {{"group:wrench_" .. material .. "_apos"}},
 				})
 			end
 		end
