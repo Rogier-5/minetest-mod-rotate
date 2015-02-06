@@ -9,6 +9,13 @@
 # Both in grayscale colors.
 #
 
+if ! { test -f generate \
+	&& test -f wrench_master_diagonal.png \
+	&& test -f wrench_master_horizontal.png; }; then
+    echo "The generate script must be run inside the textures directory" 1>&2
+    exit 1
+fi
+
 materials="
 	wood	#6C4913 100
 	steel	#FFFFFF	130
@@ -85,20 +92,21 @@ echo "$modes" \
 	    "wrench_mode_cube_${mode}.png"
     else
 	convert \
-	    -size 18x18 \
+	    -size 16x16 \
 	    -matte \
 	    "xc:RGBA(0,0,0,0)" \
 	    -fill "RGB($black,$black,$black)" \
-	    -draw "line 12,1 12,1" \
-	    -draw "line 15,1 15,1" \
-	    -draw "line 9,2 12,2" \
-	    -draw "line 15,2 16,2" \
-	    -draw "line 9,5 12,5" \
-	    -draw "line 15,5 16,5" \
-	    -draw "line 12,6 12,6" \
-	    -draw "line 15,6 15,6" \
+	    -draw "line 11,0 11,0" \
+	    -draw "line 14,0 14,0" \
+	    -draw "line 8,1 11,1" \
+	    -draw "line 14,1 15,1" \
+	    -draw "line 8,4 11,4" \
+	    -draw "line 14,4 15,4" \
+	    -draw "line 11,5 11,5" \
+	    -draw "line 14,5 14,5" \
 	    -fill "$rgb" \
-	    -draw "point 16,1" \
+	    -draw "point 15,0" \
+	    -bordercolor none -border 1 \
 	    "wrench_mode_cube_${mode}.png"
     fi
 done
