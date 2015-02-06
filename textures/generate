@@ -41,7 +41,7 @@ done
 black=16
 modes="
 	apos	RGB(200,16,16)
-	rpos	RGB(48,48,255)
+	rpos	RGB(32,32,255)
 	"
 echo "$modes" \
 | while read mode rgb; do
@@ -106,7 +106,7 @@ echo "$modes" \
 	    -draw "line 14,5 14,5" \
 	    -fill "$rgb" \
 	    -draw "point 15,0" \
-	    -bordercolor none -border 1 \
+	    -background none -gravity northeast -extent 18x18 \
 	    "wrench_mode_cube_${mode}.png"
     fi
 done
@@ -116,7 +116,7 @@ cube_sides="
 	back	RGB(48,48,48)
 	left	RGB(200,24,24)
 	right	RGB(24,200,24)
-	top	RGB(48,48,255)
+	top	RGB(32,32,255)
 	bottom	RGB(130,50,0)
 	"
 
@@ -152,7 +152,7 @@ echo "$cube_sides" \
 		-fill "$rgb" \
 		-draw "point $pos2" \
 		-scale 200% \
-		-bordercolor none -border 1 \
+		-background none -gravity northeast -extent 18x18 \
 		"wrench_mode_${side}_${dir}.png"
 	fi
     done
