@@ -7,19 +7,28 @@ local eye_offset_hack = 1.7
 local wrench_uses_steel = 450
 local disable_wooden_wrench = true
 local mod_name = "rotate"
+
 -- Choose recipe.
---local craft_recipe = "beak_north"		-- conflicts with technic wrench
---local craft_recipe = "beak_northwest"
+-- Options:
+-- 	"beak_north"		-- may conflict with another wrench (technic ?)
+--	"beak_northwest"
+--	"beak_west"
+--	"beak_southwest"
+--	"beak_south"
 local craft_recipe = "beak_west"
---local craft_recipe = "beak_southwest"
---local craft_recipe = "beak_south"
-local alt_recipe = true				-- Register a second, alternate recipe
+-- Register a second, alternate recipe
+local alt_recipe = false
+
 -- How to incidate the orientation of the positioning wrenches.
 -- "axis_rot": uses the 'axismode' and 'rotmode' images
 -- "cube": use an exploded cube with different colors
 -- "linear": use images 'wrench_mode_<mode>.png'. E.g.: wrench_mode_s53.png
 --	(Note: such images do not exist yet...)
 local wrench_orientation_indicator = "cube"
+
+----------------------------------------
+----- END OF CONFIGURATION SECTION -----
+----------------------------------------
 
 local PI = math.atan2(0,-1)
 local mod_name_upper=string.upper(mod_name)
@@ -84,6 +93,14 @@ end
 -- mappings have the following format:
 -- - string: use the clockwise rotation for the specified side
 -- - table: use the player's facing direction to find the side whose clockwise rotation to use
+-- E.g.:
+--	- Looking at the north side of a node, a clockwise rotation moves the
+--	  up side to the west, the west side down, the down side east and the east side up
+--	- Looking at the west side of a node, a rotation upwards corresponds
+--	  to a clockwise rotation as seen from the south side of the node
+--	  (i.e.: up side goes east, east side goes down, etc.)
+--	- Looking at the top side of the node, facing east, a rotation to the right
+--	  corresponds to a clockwise rotation as seen from the west side of the node
 local rotation_specifications = {
 	north = {
 		cw =	{up="west", west="down", down="east", east="up"},
@@ -175,8 +192,8 @@ local mt_orientation = {
 	}
 
 -- Table of mappings between minetest orientation code (0..23) and this mod's
--- own orientation code.
--- Wrench orientation consists of list of sides facing up, north and east
+-- own orientation code, and a corresponding node orientation
+-- A node's orientation consists of a list of the sides facing up, north and east
 -- shorthand code of the form 'UNE=<up-side>,<north-side>,<east-side>'
 -- (contents are computed at startup, and only used at startup)
 --
@@ -190,7 +207,7 @@ local mt_orientation = {
 local mt_wrench_orientation_map = {}
 
 -- Table of defined rotations - used at runtine to lookup the rotations
--- for every side of a node the user can be facing (north, east, ...), it contains a table
+-- for every side of a node the user can be facing (punching) (north, east, ...), it contains a table
 -- of minetest orientation code (0..23) to clockwise rotated minetest orientation code.
 -- e.g.:
 -- { north = { [0] = 1, [1] = 4, [...], [23] = 5 },
@@ -200,8 +217,14 @@ local mt_wrench_orientation_map = {}
 local mt_clockwise_rotation_map = {}
 
 -- Mapping of minetest orientation to north-based orientation
--- (e.g. a block seen from the east looks identical to the same
---       block, seen from the north, after rotating it left)
+-- (used for relative positioning mode)
+-- (e.g.:
+--	- If a block that is seen from the east must be looked
+--	  at from the north, it must be rotated right to have
+--	  exactly the same view.
+--	- If a block that is seen from above by a player facing
+--	  east, must be looked from the north, it must be rotated
+--	  clockwise, then left to have exactly the same view).
 local mt_orientation_to_facing = {
 	north = "none",
 	south = "reverse",
@@ -245,7 +268,7 @@ local facing_orientation_to_mt = {
 -- (used to avoid wearing the tool for multiple consecutive rotations of the same node)
 local player_rotation_history = {}
 
-
+-- fill mt_wrench_orientation_map
 local function compute_wrench_orientation_codes()
 	local mt_axis
 	for mt_axis = 0,5 do
@@ -275,6 +298,7 @@ local function compute_wrench_orientation_codes()
 	end
 end
 
+-- fill mt_clockwise_rotation_map
 local function precompute_clockwise_rotations()
 	local mt_or11n
 	for mt_or11n = 0, 23 do
@@ -311,7 +335,6 @@ local function precompute_clockwise_rotations()
 		end
 	end
 end
-
 
 -- mapping of:
 -- - <pitch quadrant> to facing direction
@@ -354,6 +377,7 @@ local dpos_to_pointing_map = {
 -- - which side of the 'under' node the player is pointing at
 -- return:
 -- { facing_direction = <direction (NESW)>, faced_side = <direction (NESWUD)>, pointed_side = <direction (NESWUD)> }
+-- TODO: player provides methods for obtaining the pitch and yaw. Use those...
 local function player_node_state(player, pointed_thing)
 	local c
 	local v
@@ -404,6 +428,8 @@ local function clockwise_rotation_side(state, rotation)
 	return rot_side
 end
 
+-- Convert a minetest absolute orientation to a north-based
+-- orientation used for relative positioning mode
 local function mt_to_relative_orientation(state, orientation)
 	local rotate = mt_orientation_to_facing[state.pointed_side]
 	if type(rotate) == "table" then
@@ -425,6 +451,7 @@ local function mt_to_relative_orientation(state, orientation)
 	return orientation
 end
 
+-- Convert relative, north-based orientation to an absolute orientation
 local function relative_to_mt_orientation(state, orientation)
 	local rotate = facing_orientation_to_mt[state.pointed_side]
 	if type(rotate) == "table" then
@@ -446,7 +473,7 @@ local function relative_to_mt_orientation(state, orientation)
 	return orientation
 end
 
--- Perform the actual rotation lookup. Pretty straightforward...
+-- Perform the actual rotation lookup (rotation mode). Pretty straightforward...
 local function lookup_node_rotation(pointed_thing, old_orientation, player, rotation)
 	local state = player_node_state(player, pointed_thing)
 	local clockwise_side = clockwise_rotation_side(state, rotation)
