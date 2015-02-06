@@ -518,7 +518,7 @@ local function get_node_absolute_orientation_mode(pointed_thing)
 			(ndef.drawtype == "nodebox" and
 			ndef.node_box.type ~= "fixed") or
 			node.param2 == nil then
-		return "00"
+		return "a00"
 	else
 		local param2 = node.param2
 		local axis = bit.band(bit.rshift(param2, 2), 0x7)
@@ -540,7 +540,7 @@ local function get_node_relative_orientation_mode(player, pointed_thing)
 			(ndef.drawtype == "nodebox" and
 			ndef.node_box.type ~= "fixed") or
 			node.param2 == nil then
-		return "00"
+		return "r00"
 	else
 		local param2 = node.param2
 		local state = player_node_state(player, pointed_thing)
