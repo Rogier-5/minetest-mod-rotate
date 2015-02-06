@@ -57,6 +57,16 @@ local function dup_table(t)
 	return t
 end
 
+local function mt_or11n_code(axis, rot)
+	return axis * 4 + rot % 4
+end
+local function mt_axis_code(or11n)
+	return math.floor(or11n / 4) % 8
+end
+local function mt_rot_code(or11n)
+	return or11n % 4
+end
+
 local or11n_directions = {"up", "north", "east"}
 local or11n_code_prefix = "UNE="
 local function or11n_code(node_or11n)
@@ -276,7 +286,7 @@ local function compute_wrench_orientation_codes()
 		local mt_rot=0
 		local node_or11n = dup_table(mt_axis_spec.axis_or11n)
 		for mt_rot = 0, 3 do
-			local mt_orientation_code = bit.bor(bit.lshift(mt_axis, 2), mt_rot)
+			local mt_orientation_code = mt_or11n_code(mt_axis, mt_rot)
 			local node_or11n_code=or11n_code(node_or11n)
 			mt_wrench_orientation_map[mt_orientation_code] = { code = node_or11n_code, node = node_or11n }
 			if not mt_wrench_orientation_map[node_or11n_code] then
@@ -521,8 +531,8 @@ local function get_node_absolute_orientation_mode(pointed_thing)
 		return "a00"
 	else
 		local param2 = node.param2
-		local axis = bit.band(bit.rshift(param2, 2), 0x7)
-		local rot = bit.band(param2, 0x3)
+		local axis = mt_axis_code(param2)
+		local rot = mt_rot_code(param2)
 		return string.format("a%d%d",axis,rot)
 	end
 end
@@ -545,8 +555,8 @@ local function get_node_relative_orientation_mode(player, pointed_thing)
 		local param2 = node.param2
 		local state = player_node_state(player, pointed_thing)
 		local relative = mt_to_relative_orientation(state, param2)
-		local axis = bit.band(bit.rshift(relative, 2), 0x7)
-		local rot = bit.band(relative, 0x3)
+		local axis = mt_axis_code(relative)
+		local rot = mt_rot_code(relative)
 		return string.format("r%d%d",axis,rot)
 	end
 end
@@ -579,7 +589,7 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 	if string.match(mode, "[0-9]") then
 		local axis = tonumber(string.sub(mode, 2, 2))
 		local rot = tonumber(string.sub(mode, 3, 3))
-		local orientation = bit.bor(bit.lshift(axis, 2), rot)
+		local orientation = mt_or11n_code(axis, rot)
 		if string.sub(mode, 1, 1) == "a" then
 		    node.param2 = orientation
 		elseif string.sub(mode, 1, 1) == "r" then
@@ -596,11 +606,11 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 	if wrench_debug >= 1 then
 		minetest.chat_send_player(player:get_player_name(),
 				string.format("Node wrenched: axis %d, rot %d (%d) ->  axis: %d, rot: %d (%d)",
-					bit.band(bit.rshift(old_param2, 2), 0x7),
-					bit.band(old_param2, 0x3),
+					mt_axis_code(old_param2),
+					mt_rot_code(old_param2),
 					old_param2,
-					bit.band(bit.rshift(node.param2, 2), 0x7),
-					bit.band(node.param2, 0x3),
+					mt_axis_code(node.param2),
+					mt_rot_code(node.param2),
 					node.param2))
 	end
 
@@ -637,7 +647,7 @@ local wrench_modes = {
 local function compose_cube_image(mode)
 	local axis = string.sub(mode,2,2)
 	local rot = string.sub(mode,3,3)
-	local mt_mode = bit.bor(bit.lshift(axis,2), rot)
+	local mt_mode = mt_or11n_code(axis, rot)
 	local composed_image = ""
 	local side, dir
 	for dir, side in pairs(mt_wrench_orientation_map[mt_mode].node) do
