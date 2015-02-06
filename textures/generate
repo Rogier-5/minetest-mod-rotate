@@ -28,9 +28,12 @@ echo "$materials" \
     convert "wrench_${material}_right.png" -rotate -90 "wrench_${material}_up.png"
 done
 
-black=8
+#
+# Generate axis/rotation mode indicator images
+#
+black=16
 modes="
-	apos	RGB(200,8,8)
+	apos	RGB(200,16,16)
 	rpos	RGB(48,48,255)
 	"
 echo "$modes" \
@@ -47,7 +50,7 @@ echo "$modes" \
 	    -draw "point 15,$((axismode + 1))" \
 	    "wrench_axismode_${axismode}_${mode}.png"
     done
-    for rotmode in 0 1 2 3 4 5; do
+    for rotmode in 0 1 2 3; do
 	convert \
 	    -size 18x18 \
 	    -matte \
@@ -59,3 +62,91 @@ echo "$modes" \
 	    "wrench_rotmode_${rotmode}_${mode}.png"
     done
 done
+
+#
+# Generate cube mode indicator images
+#
+
+cube_size=2
+
+echo "$modes" \
+| while read mode rgb; do
+    if [ -z "$mode" ]; then continue; fi
+    if ((cube_size == 1)); then
+	convert \
+	    -size 18x18 \
+	    -matte \
+	    "xc:RGBA(0,0,0,0)" \
+	    -fill "RGB($black,$black,$black)" \
+	    -draw "line 13,1 14,1" \
+	    -draw "line 16,1 16,1" \
+	    -draw "line 13,3 14,3" \
+	    -draw "line 16,3 16,3" \
+	    "wrench_mode_cube_${mode}.png"
+    else
+	convert \
+	    -size 18x18 \
+	    -matte \
+	    "xc:RGBA(0,0,0,0)" \
+	    -fill "RGB($black,$black,$black)" \
+	    -draw "line 12,1 12,1" \
+	    -draw "line 15,1 15,1" \
+	    -draw "line 9,2 12,2" \
+	    -draw "line 15,2 16,2" \
+	    -draw "line 9,5 12,5" \
+	    -draw "line 15,5 16,5" \
+	    -draw "line 12,6 12,6" \
+	    -draw "line 15,6 15,6" \
+	    -fill "$rgb" \
+	    -draw "point 16,1" \
+	    "wrench_mode_cube_${mode}.png"
+    fi
+done
+
+cube_sides="
+	front	RGB(200,200,200)
+	back	RGB(48,48,48)
+	left	RGB(200,24,24)
+	right	RGB(24,200,24)
+	top	RGB(48,48,255)
+	bottom	RGB(130,50,0)
+	"
+
+cube_directions="
+	north	14,1	6,1
+	south	12,1	4,1
+	east	13,1	5,1
+	west	15,1	7,1
+	up	14,0	6,0
+	down	14,2	6,2
+	"
+
+echo "$cube_sides" \
+| while read side rgb; do
+    if [ -z "$side" ]; then continue; fi
+    echo "$cube_directions" \
+    | while read dir pos1 pos2; do
+	if [ -z "$dir" ]; then continue; fi
+	if ((cube_size == 1)); then
+	    convert \
+		-size 16x16 \
+		-matte \
+		"xc:RGBA(0,0,0,0)" \
+		-fill "$rgb" \
+		-draw "point $pos1" \
+		-bordercolor none -border 1 \
+		"wrench_mode_${side}_${dir}.png"
+	else
+	    convert \
+		-size 8x8 \
+		-matte \
+		"xc:RGBA(0,0,0,0)" \
+		-fill "$rgb" \
+		-draw "point $pos2" \
+		-scale 200% \
+		-bordercolor none -border 1 \
+		"wrench_mode_${side}_${dir}.png"
+	fi
+    done
+done
+

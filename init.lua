@@ -14,6 +14,12 @@ local craft_recipe = "beak_west"
 --local craft_recipe = "beak_southwest"
 --local craft_recipe = "beak_south"
 local alt_recipe = true				-- Register a second, alternate recipe
+-- How to incidate the orientation of the positioning wrenches.
+-- "axis_rot": uses the 'axismode' and 'rotmode' images
+-- "cube": use an exploded cube with different colors
+-- "linear": use images 'wrench_mode_<mode>.png'. E.g.: wrench_mode_s53.png
+--	(Note: such images do not exist yet...)
+local wrench_orientation_indicator = "cube"
 
 local PI = math.atan2(0,-1)
 local mod_name_upper=string.upper(mod_name)
@@ -600,6 +606,24 @@ local wrench_modes = {
 	["r40"]="r40", ["r41"]="r41", ["r42"]="r42", ["r43"]="r43",
 	["r50"]="r50", ["r51"]="r51", ["r52"]="r52", ["r53"]="r53",
 	}
+
+local function compose_cube_image(mode)
+	local axis = string.sub(mode,2,2)
+	local rot = string.sub(mode,3,3)
+	local mt_mode = bit.bor(bit.lshift(axis,2), rot)
+	local composed_image = ""
+	local side, dir
+	for dir, side in pairs(mt_wrench_orientation_map[mt_mode].node) do
+		local image = "wrench_mode_"..side.."_"..dir..".png"
+		composed_image = composed_image.."^"..image
+		side = opposite[side]
+		dir = opposite[dir]
+		image = "wrench_mode_"..side.."_"..dir..".png"
+		composed_image = composed_image.."^"..image
+	end
+	return string.sub(composed_image,2)
+end
+
 local wrench_materials = {
 	-- Wooden wrench is an extra - for players who have not mined metals yet
 	-- Its low usage count is intentional: it is dirt-cheap, and they shouldn't
@@ -662,13 +686,23 @@ local function register_wrench_positioning(material, material_descr, uses, mode)
 		notcrea = 0
 	end
 	local wrench_image = "wrench_" .. material ..".png"
-	local axis_image = "wrench_axismode_" .. string.sub(mode, 2, 2) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
-	local rotation_image = "wrench_rotmode_" .. string.sub(mode, 3, 3) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
+	local orientation_image
+	if wrench_orientation_indicator == "axis_rot" then
+		local axis_image = "wrench_axismode_" .. string.sub(mode, 2, 2) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
+		local rotation_image = "wrench_rotmode_" .. string.sub(mode, 3, 3) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
+		orientation_image = axis_image .. "^" .. rotation_image
+	elseif wrench_orientation_indicator == "linear" then
+		orientation_image = "wrench_mode_" .. mode.png
+	elseif wrench_orientation_indicator == "cube" then
+		local absrel_image = "wrench_mode_cube_"..string.sub(mode, 1, 1).."pos.png"
+		local sides_image = compose_cube_image(mode)
+		orientation_image = absrel_image .. "^" .. sides_image
+	end
 
 	minetest.register_tool(mod_name .. ":wrench_" .. material .. "_" .. mode, {
 		description = material_descr .. " wrench (" .. mode .. "; left-click positions, right-click sets mode)",
 		wield_image = "wrench_" .. material .. ".png",
-		inventory_image = wrench_image .. "^" .. axis_image .. "^" .. rotation_image,
+		inventory_image = wrench_image .. "^" .. orientation_image,
 		groups = { wrench = 1, ["wrench_"..material.."_"..string.sub(mode,1,1).."pos"] = 1, not_in_creative_inventory = notcrea },
 		on_use = function(itemstack, player, pointed_thing)
 			wrench_handler(itemstack, player, pointed_thing, mode, material, uses)
