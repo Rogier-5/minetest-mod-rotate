@@ -96,6 +96,8 @@ representations of the current submode are available: 'axis_rot' and 'cube'.
 The 'cube' representation is recommended.
 A third mode is supported, 'linear', but no corresponding images are included.
 
+**Axis / rotation representation**
+
 The 'axis_rot' orientation mode representation uses red dots (for absolute mode)
 or blue dots (for relative mode) on a black background, in the upper-right corner
 of the image.
@@ -107,6 +109,8 @@ Absolute and relative positioning wrenches ('axis_rot' representation):
 
 .. image:: images/wrench_positioning_absolute_axis_rot.png
 .. image:: images/wrench_positioning_relative_axis_rot.png
+
+**Cube representation**
 
 The 'cube' orientation mode representation displays an exploded cube on a black
 background. In the top-right, a tiny dot indicates absolute mode (red) or relative
