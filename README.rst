@@ -67,7 +67,7 @@ The wrench has three major modes of operation:
 
 2) Positioning mode (relative)
 	In this mode, when punching a node, the node is rotated to a preconfigured
-	orientation with respect to the punched node and the player. I.e. if the wrench
+	orientation with respect to the punched side and the player. I.e. if the wrench
 	is configured by right-clicking a specific side of a node, then when another
 	node is re-oriented, the punched side will match the punched side of the original
 	node (i.e. same side and same rotation).
