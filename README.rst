@@ -139,6 +139,16 @@ Absolute and relative positioning wrenches ('cube' representation):
 .. image:: images/wrench_positioning_relative_cube.png
 .. image:: images/wrench_positioning_relative_cube_2.png
 
+Exploded cube image (default orientation), and matching views of the node:
+
+.. image:: images/exploded_cube.png
+.. image:: images/spacer.png
+.. image:: images/non_exploded_cube_bl.png
+.. image:: images/spacer.png
+.. image:: images/non_exploded_cube.png
+.. image:: images/spacer.png
+.. image:: images/non_exploded_cube_tr.png
+
 Wrench materials
 ----------------
 
