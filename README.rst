@@ -1,3 +1,6 @@
+Minetest wrench for rotating nodes (rotate:wrench)
+==================================================
+
 This wrench (not to be confused with the technic wrench) makes the rotating
 of nodes much more intuitive.
 
@@ -9,7 +12,7 @@ Different wrenches (wood, steel, copper, gold):
 .. image:: images/wrench_gold.png
 
 Modes of operation
-==================
+------------------
 
 The wrench has three major modes of operation:
 
@@ -86,7 +89,7 @@ The wrench has three major modes of operation:
 	.. image:: images/wrench_positioning_relative_cube_2.png
 
 Graphical indication of positioning modes:
-==========================================
+------------------------------------------
 
 For the absolute and relative positioning modes, two possible graphical
 representations of the current submode are available: 'axis_rot' and 'cube'.
@@ -133,7 +136,7 @@ Absolute and relative positioning wrenches ('cube' representation):
 .. image:: images/wrench_positioning_relative_cube_2.png
 
 Wrench materials
-================
+----------------
 
 Wrenches comes in four versions: wooden (optional), steel, copper, gold. The wooden
 wrench is exceptionally cheap, and wears very fast (approx. 10 uses). The steel
@@ -144,7 +147,7 @@ configured, automatically changing those of the copper and gold wrenches as well
 amount of a screwdriver).
 
 Crafting
-========
+--------
 
 A wrench is crafted using 4 ingots (or 4 sticks for the wooden wrench). In case of
 conflict with another mod, a few alternative recipies are available.
@@ -157,7 +160,7 @@ which can be crafted to an absolute positioning mode wrench, which can be crafte
 back to a rotation-mode wrench.
 
 Other notes
-===========
+-----------
 
 The operation of the wrench has been optimized: all required information is precomputed
 at startup. Actual operation of a wrench basically requires just a few table lookups.
