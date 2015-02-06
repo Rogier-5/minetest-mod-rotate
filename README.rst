@@ -1,6 +1,13 @@
 This wrench (not to be confused with the technic wrench) makes the rotating
 of nodes much more intuitive.
 
+Different wrenches (wood, steel, copper, gold):
+
+.. image:: images/wrench_wood.png
+.. image:: images/wrench_steel.png
+.. image:: images/wrench_copper.png
+.. image:: images/wrench_gold.png
+
 Modes of operation
 ==================
 
@@ -26,6 +33,16 @@ The wrench has three major modes of operation:
 	subsequent rotations of the same node do not add additional wear to the wrench.
 	Punching 2 nodes alternatingly *does* add wear on every punch.
 
+	Submodes (none, clockwise, counter-clockwise, left, right up, down):
+
+	.. image:: images/wrench_copper.png
+	.. image:: images/wrench_copper_cw.png
+	.. image:: images/wrench_copper_ccw.png
+	.. image:: images/wrench_copper_left.png
+	.. image:: images/wrench_copper_right.png
+	.. image:: images/wrench_copper_up.png
+	.. image:: images/wrench_copper_down.png
+
 2) Positioning mode (absolute)
 	In this mode, when punching a node, the node is rotated to a preconfigured
 	orientation with respect to the world. I.e. whatever the initial orientation
@@ -38,6 +55,12 @@ The wrench has three major modes of operation:
 	The desired position is configured by right-clicking any node, which configures
 	the wrench to the current orientation of the clicked-node. For most regular nodes,
 	which don't have an orientation, this resets the wrench to the default orientation.
+
+	Example images (see below for details):
+
+	.. image:: images/wrench_positioning_absolute_axis_rot.png
+	.. image:: images/wrench_positioning_absolute_cube.png
+	.. image:: images/wrench_positioning_absolute_cube_2.png
 
 2) Positioning mode (relative)
 	In this mode, when punching a node, the node is rotated to a preconfigured
@@ -56,6 +79,12 @@ The wrench has three major modes of operation:
 	submode indicator (see below) of the absolute and of the relative wrench will
 	indicate the same.
 
+	Example images (see below for details):
+
+	.. image:: images/wrench_positioning_relative_axis_rot.png
+	.. image:: images/wrench_positioning_relative_cube.png
+	.. image:: images/wrench_positioning_relative_cube_2.png
+
 Graphical indication of positioning modes:
 ==========================================
 
@@ -70,6 +99,11 @@ of the image.
 The left dot indicates the axis direction: up, north, south, east, west, down
 respectively.
 The right dot indicates the rotation: 0, 90, 180 and 270 degrees respectively.
+
+Absolute and relative positioning wrenches ('axis_rot' representation):
+
+.. image:: images/wrench_positioning_absolute_axis_rot.png
+.. image:: images/wrench_positioning_relative_axis_rot.png
 
 The 'cube' orientation mode representation displays an exploded cube on a black
 background. In the top-right, a tiny dot indicates absolute mode (red) or relative
@@ -91,6 +125,13 @@ the right of the player, etc.
 E.g. if if the center color is blue, the original top side will become the punched
 node (facing the player).
 
+Absolute and relative positioning wrenches ('cube' representation):
+
+.. image:: images/wrench_positioning_absolute_cube.png
+.. image:: images/wrench_positioning_absolute_cube_2.png
+.. image:: images/wrench_positioning_relative_cube.png
+.. image:: images/wrench_positioning_relative_cube_2.png
+
 Wrench materials
 ================
 
@@ -107,6 +148,9 @@ Crafting
 
 A wrench is crafted using 4 ingots (or 4 sticks for the wooden wrench). In case of
 conflict with another mod, a few alternative recipies are available.
+
+.. image:: images/wrench_wood_crafting.png
+.. image:: images/wrench_copper_crafting.png
 
 A rotation-mode wrench can also be crafted to a relative positioning mode wrench,
 which can be crafted to an absolute positioning mode wrench, which can be crafted

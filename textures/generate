@@ -158,3 +158,27 @@ echo "$cube_sides" \
     done
 done
 
+images="
+	wrench_wood.png
+	wrench_steel.png
+	wrench_copper.png
+	wrench_gold.png
+	wrench_copper.png
+	wrench_copper_cw.png
+	wrench_copper_ccw.png
+	wrench_copper_left.png
+	wrench_copper_right.png
+	wrench_copper_up.png
+	wrench_copper_down.png
+	"
+
+echo "$images" \
+| while read file; do
+    if [ -z "$file" ]; then continue; fi
+    convert \
+	"$file" \
+	-scale 400% \
+	"../images/$file"
+done
+
+
