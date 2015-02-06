@@ -798,15 +798,17 @@ local function register_all_wrenches()
 				end
 			end
 
-			minetest.register_craft({
-				output = mod_name .. ":wrench_" .. material,
-				recipe = make_recipe(material_spec.ingredient, "")
-				})
-			if alt_recipe == true then
+			if minetest.get_modpath("default") ~= nil then
 				minetest.register_craft({
 					output = mod_name .. ":wrench_" .. material,
-					recipe = make_recipe(material_spec.ingredient, "group:wood")
-				})
+					recipe = make_recipe(material_spec.ingredient, "")
+					})
+				if alt_recipe == true then
+					minetest.register_craft({
+						output = mod_name .. ":wrench_" .. material,
+						recipe = make_recipe(material_spec.ingredient, "group:wood")
+					})
+				end
 			end
 			-- Convert rotating wrench to positioning wrench (relative mode)
 			minetest.register_craft({
