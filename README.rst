@@ -173,6 +173,112 @@ A rotation-mode wrench can also be crafted to a relative positioning mode wrench
 which can be crafted to an absolute positioning mode wrench, which can be crafted
 back to a rotation-mode wrench.
 
+API
+---
+
+This mod also provides an API for users to register their own wrenches. The following
+methods are defined:
+
+**rotate.register_wrench_recipe(material, ingredient)**
+
+Register a recipe for an existing wrench. Example:
+
+::
+
+	rotate.register_wrench_recipe("steel", "moreores:tin_ingot")
+
+
+**rotate.register_wrench(mod_name, material, description, ingredient, use_parameter, override)**
+
+Register a wrench of a new material.
+
+mod_name:
+	The name of the mod registering the wrench
+
+material:
+	Short name of the material (e.g. "mithril").
+	This string is used to construct the name of the images
+
+description:
+	Description of the material (e.g. "Mithril").
+	This string is used in the display name of the tool. E.g.: "Mithril wrench"
+
+ingredient:
+	The ingredient to use to craft this type of wrench (e.g. "moreores:mithril_ingot")
+
+use_parameter:
+	This parameter specifies the number of uses. It can be sepcified in two ways:
+
+	- As an integer: the maximum number of uses (e.g.: 2, for 2 uses)
+	- As a float: the number of uses relative to the steel wrench (e.g.: 2.01, for
+	  (a tiny bit more than) two times as many uses as the steel wrench.
+
+override:
+	Optional parameter. If true, then reregistering an existing wrench will be accepted.
+	Else an error message is printed, and the registration is ignored.
+
+Example:
+
+::
+
+	rotate.register_wrench("mywrench", "mithril", "Mithril", "moreores:mithril_ingot", 1.8)
+
+**rotate.register_wrench(table, override)**
+
+Alternative invocation of *register_wrench*; all wrench parameters are specified in a table.
+
+::
+
+	rotate.register_wrench({
+		mod_name = "mywrench",
+		material = "mithril",
+		description = "Mithril",
+		ingredient = "moreores:mithril_ingot",
+		use_parameter = 1.8,
+		})
+
+
+**rotate.wrench_uses_steel**
+
+The number of configured uses for a steel wrench.
+
+This is a variable, provided for reference only - the rotate mod does *not* use it.
+
+**Textures**
+
+Of course, textures must be created as well. The following are needed:
+
+::
+
+	wrench_<material>.png
+	wrench_<material>_ccw.png
+	wrench_<material>_cw.png
+	wrench_<material>_down.png
+	wrench_<material>_left.png
+	wrench_<material>_right.png
+	wrench_<material>_up.png
+
+If desired, the bash script 'textures/generate' can be used to generate the
+images; if an entry is added to the list of materials:
+
+::
+
+	materials="
+		wood    #6C4913 100
+		steel   #FFFFFF 130
+		copper  #F6A860 100
+		gold    #FFe900 130
+		mithril #313196 100
+		"
+
+and the script is run, the new images will have been created (and the others
+regenerated as well). Note that imagemagick is required for the script to function.
+
+The script is primarily provided for convenience. In particular, it is not
+intendend to be able to run on Windows (or anywhere else than on my system,
+for that matter :-) - although you are welcome to try).
+
+
 Other notes
 -----------
 

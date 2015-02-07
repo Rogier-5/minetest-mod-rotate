@@ -1,37 +1,16 @@
 
-local wrench_debug = 0
--- Hack to compute pitch based on eye position instead of feet position
-local eye_offset_hack = 1.7
--- Number of uses of a steel wench. The actual number may be slightly
--- lower, depending on how well this number divides 65535
-local wrench_uses_steel = 450
-local disable_wooden_wrench = true
 local mod_name = "rotate"
 
--- Choose recipe.
--- Options:
--- 	"beak_north"		-- may conflict with another wrench (technic ?)
---	"beak_northwest"
---	"beak_west"
---	"beak_southwest"
---	"beak_south"
-local craft_recipe = "beak_west"
--- Register a second, alternate recipe
-local alt_recipe = false
+local mod_name_upper=string.upper(mod_name)
 
--- How to incidate the orientation of the positioning wrenches.
--- "axis_rot": uses the 'axismode' and 'rotmode' images
--- "cube": use an exploded cube with different colors
--- "linear": use images 'wrench_mode_<mode>.png'. E.g.: wrench_mode_s53.png
---	(Note: such images do not exist yet...)
-local wrench_orientation_indicator = "cube"
+if _G[mod_name] == nil then
+	error(string.format("[%s] global data not found - is the mod name correct ??", mod_name_upper))
+end
+local module = _G[mod_name]
 
-----------------------------------------
------ END OF CONFIGURATION SECTION -----
-----------------------------------------
+module.api = {}
 
 local PI = math.atan2(0,-1)
-local mod_name_upper=string.upper(mod_name)
 
 local opposite = {
 	north = "south",
@@ -296,7 +275,7 @@ local function compute_wrench_orientation_codes()
 			node_or11n = rotate_node(node_or11n, mt_axis_spec.rot_cycle, true)
 		end
 	end
-	if wrench_debug >= 2 then
+	if module.debug >= 2 then
 		local k,v
 		for k,v in pairs(mt_wrench_orientation_map) do
 			if type(k) == "string" then
@@ -329,7 +308,7 @@ local function precompute_clockwise_rotations()
 --			mt_clockwise_rotation_map[facing][mt_or11n] = 0
 --		end
 --	end
-	if wrench_debug >= 2 then
+	if module.debug >= 2 then
 		local k0, v0
 		for k0,v0 in pairs(mt_clockwise_rotation_map) do
 			io.write(string.format("%-10s:", k0))
@@ -395,7 +374,7 @@ local function player_node_state(player, pointed_thing)
 	local node_pos = pointed_thing.under
 
 	-- TODO: compute pitch based on actual eye position (is that possible at all ??)
-	player_pos.y = player_pos.y + eye_offset_hack
+	player_pos.y = player_pos.y + module.api_config.eye_offset_hack
 	local node_dir = {}
 	for _,c in ipairs({"x", "y", "z"}) do
 		node_dir[c] = node_pos[c] - player_pos[c]
@@ -418,7 +397,7 @@ local function player_node_state(player, pointed_thing)
 	result.pointed_side = dpos_to_pointing_map[string.format("%d,%d,%d", dpos.x, dpos.y, dpos.z)]
 
 	if not result.faced_side or not result.facing_direction or not result.pointed_side then
-		minetest.log("error",string.format("[%s]: player_node_state: internal error: facing_direction = %s, faced_side=%s, pointed_side=%s",
+		error(string.format("[%s]: player_node_state: internal error: facing_direction = %s, faced_side=%s, pointed_side=%s",
 			mod_name_upper,result.facing_direction, result.faced_side, result.pointed_side))
 	end
 	return result
@@ -603,7 +582,7 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 		node.param2 = lookup_node_rotation(pointed_thing, old_param2, player, mode)
 	end
 
-	if wrench_debug >= 1 then
+	if module.debug >= 1 then
 		minetest.chat_send_player(player:get_player_name(),
 				string.format("Node wrenched: axis %d, rot %d (%d) ->  axis: %d, rot: %d (%d)",
 					mt_axis_code(old_param2),
@@ -661,34 +640,10 @@ local function compose_cube_image(mode)
 	return string.sub(composed_image,2)
 end
 
-local wrench_materials = {
-	-- Wooden wrench is an extra - for players who have not mined metals yet
-	-- Its low usage count is intentional: it is dirt-cheap, and they shouldn't
-	-- be needed anyway.
-	wood = {
-		description = "Wooden",
-		ingredient = "group:stick",
-		use_factor = 10/wrench_uses_steel,
-		disabled = disable_wooden_wrench,
-		},
-	steel = {
-		description = "Steel",
-		ingredient = "default:steel_ingot",
-		use_factor = 1,
-		},
-	copper = {
-		description = "Copper",
-		ingredient = "default:copper_ingot",
-		use_factor = 1.55,
-		},
-	gold = {
-		description = "Gold",
-		ingredient = "default:gold_ingot",
-		use_factor = 2.1,
-		},
-	}
+local known_wrenches = {}
 
-local function register_wrench_rotating(material, material_descr, uses, mode, next_mode)
+
+local function register_wrench_rotating(wrench_mod_name, material, material_descr, uses, mode, next_mode)
 	local sep = "_"
 	local notcrea = 1
 	local descr_extra = "; "
@@ -697,7 +652,8 @@ local function register_wrench_rotating(material, material_descr, uses, mode, ne
 		notcrea = 0
 		descr_extra = ""
 	end
-	minetest.register_tool(mod_name .. ":wrench_" .. material .. sep .. mode, {
+	known_wrenches[wrench_mod_name .. ":wrench_" .. material .. sep .. mode] = true
+	minetest.register_tool(wrench_mod_name .. ":wrench_" .. material .. sep .. mode, {
 		description = material_descr .. " wrench (" .. mode .. descr_extra .. "left-click rotates, right-click cycles mode)",
 		wield_image = "wrench_" .. material .. ".png",
 		inventory_image = "wrench_" .. material .. sep .. mode ..".png",
@@ -711,32 +667,35 @@ local function register_wrench_rotating(material, material_descr, uses, mode, ne
 			return itemstack
 		end,
 		on_place = function(itemstack, player, pointed_thing)
-			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. next_mode)
+			itemstack:set_name(wrench_mod_name .. ":wrench_" .. material .. "_" .. next_mode)
 			return itemstack
 		end,
 	})
 end
 
-local function register_wrench_positioning(material, material_descr, uses, mode)
+local function register_wrench_positioning(wrench_mod_name, material, material_descr, uses, mode)
 	local notcrea = 1
 	if mode == "a00" or mode == "r00" then
 		notcrea = 0
 	end
 	local wrench_image = "wrench_" .. material ..".png"
 	local orientation_image
-	if wrench_orientation_indicator == "axis_rot" then
+	if module.api_config.wrench_orientation_indicator == "axis_rot" then
 		local axis_image = "wrench_axismode_" .. string.sub(mode, 2, 2) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
 		local rotation_image = "wrench_rotmode_" .. string.sub(mode, 3, 3) .. "_" .. string.sub(mode, 1, 1) .. "pos.png"
 		orientation_image = axis_image .. "^" .. rotation_image
-	elseif wrench_orientation_indicator == "linear" then
+	elseif module.api_config.wrench_orientation_indicator == "linear" then
 		orientation_image = "wrench_mode_" .. mode.png
-	elseif wrench_orientation_indicator == "cube" then
+	elseif module.api_config.wrench_orientation_indicator == "cube" then
 		local absrel_image = "wrench_mode_cube_"..string.sub(mode, 1, 1).."pos.png"
 		local sides_image = compose_cube_image(mode)
 		orientation_image = absrel_image .. "^" .. sides_image
+	else
+		error(string.format("[%s] unrecognised value for wrench_orientation_indicator: '%s'",mod_name_upper,module.api_config.wrench_orientation_indicator))
 	end
 
-	minetest.register_tool(mod_name .. ":wrench_" .. material .. "_" .. mode, {
+	known_wrenches[wrench_mod_name .. ":wrench_" .. material .. "_" .. mode] = true
+	minetest.register_tool(wrench_mod_name .. ":wrench_" .. material .. "_" .. mode, {
 		description = material_descr .. " wrench (" .. mode .. "; left-click positions, right-click sets mode)",
 		wield_image = "wrench_" .. material .. ".png",
 		inventory_image = wrench_image .. "^" .. orientation_image,
@@ -752,95 +711,94 @@ local function register_wrench_positioning(material, material_descr, uses, mode)
 			else
 			    new_mode = get_node_absolute_orientation_mode(pointed_thing)
 			end
-			itemstack:set_name(mod_name .. ":wrench_" .. material .. "_" .. new_mode)
+			itemstack:set_name(wrench_mod_name .. ":wrench_" .. material .. "_" .. new_mode)
 			return itemstack
 		end,
 	})
 end
 
 local function make_recipe(ingredient, dummy)
-	if craft_recipe == "beak_north" then
+	if module.api_config.craft_recipe == "beak_north" then
 		return {
 			{ingredient,	dummy,		ingredient},
 			{"",		ingredient,	""	},
 			{"",		ingredient,	""	},
 			}
-	elseif craft_recipe == "beak_northwest" then
+	elseif module.api_config.craft_recipe == "beak_northwest" then
 		return {
 			{dummy,		ingredient,	""	},
 			{ingredient,	ingredient,	""	},
 			{"",		"",		ingredient},
 			}
-	elseif craft_recipe == "beak_west" then
+	elseif module.api_config.craft_recipe == "beak_west" then
 		return {
 			{ingredient,	"",		""	},
 			{dummy,		ingredient,	ingredient},
 			{ingredient,	"",		""	},
 			}
-	elseif craft_recipe == "beak_southwest" then
+	elseif module.api_config.craft_recipe == "beak_southwest" then
 		return {
 			{"",		"",		ingredient},
 			{ingredient,	ingredient,	""	},
 			{dummy,		ingredient,	""	},
 			}
-	elseif craft_recipe == "beak_south" then
+	elseif module.api_config.craft_recipe == "beak_south" then
 		return {
 			{"",		ingredient,	""	},
 			{"",		ingredient,	""	},
 			{ingredient,	dummy,		ingredient},
 			}
 	else
-		error(string.format("[%s] unrecognised recipe selected: '%s'",mod_name_upper,craft_recipe))
+		error(string.format("[%s] unrecognised recipe selected: '%s'",mod_name_upper,module.api_config.craft_recipe))
 	end
 
 end
 
-local function register_all_wrenches()
-	local material, material_spec
-	for material, material_spec in pairs(wrench_materials) do
-		if not material_spec.disabled then
-			local mode, next_mode
-			for mode,next_mode in pairs(wrench_modes) do
-				if string.match(mode, "[0-9]") then
-					register_wrench_positioning(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode)
-				else
-					register_wrench_rotating(material, material_spec.description, math.ceil(wrench_uses_steel * material_spec.use_factor), mode, next_mode)
-				end
-			end
-
-			if minetest.get_modpath("default") ~= nil then
-				minetest.register_craft({
-					output = mod_name .. ":wrench_" .. material,
-					recipe = make_recipe(material_spec.ingredient, "")
-					})
-				if alt_recipe == true then
-					minetest.register_craft({
-						output = mod_name .. ":wrench_" .. material,
-						recipe = make_recipe(material_spec.ingredient, "group:wood")
-					})
-				end
-			end
-			-- Convert rotating wrench to positioning wrench (relative mode)
-			minetest.register_craft({
-				output = mod_name .. ":wrench_" .. material .. "_r00",
-				recipe = {{"group:wrench_" .. material .. "_rot"}},
-				})
-			-- Convert positioning wrench (relative mode) to positioning wrench (absolute mode)
-			minetest.register_craft({
-				output = mod_name .. ":wrench_" .. material .. "_a00",
-				recipe = {{"group:wrench_" .. material .. "_rpos"}},
-				})
-			-- Convert positioning wrench (absolute mode) to rotating wrench
-			minetest.register_craft({
-				output = mod_name .. ":wrench_" .. material,
-				recipe = {{"group:wrench_" .. material .. "_apos"}},
-				})
+local function register_new_wrench(wrench_spec)
+	local material = wrench_spec.material
+	local mode, next_mode
+	for mode,next_mode in pairs(wrench_modes) do
+		if string.match(mode, "[0-9]") then
+			register_wrench_positioning(wrench_spec.mod_name, material, wrench_spec.description, wrench_spec.uses, mode)
+		else
+			register_wrench_rotating(wrench_spec.mod_name, material, wrench_spec.description, wrench_spec.uses, mode, next_mode)
 		end
 	end
 
+	if wrench_spec.ingredient ~= nil then
+		minetest.register_craft({
+			output = wrench_spec.mod_name .. ":wrench_" .. material,
+			recipe = make_recipe(wrench_spec.ingredient, "")
+			})
+		if module.api_config.alt_recipe == true then
+			minetest.register_craft({
+				output = wrench_spec.mod_name .. ":wrench_" .. material,
+				recipe = make_recipe(wrench_spec.ingredient, "group:wood")
+			})
+		end
+	end
+
+	-- Convert rotating wrench to positioning wrench (relative mode)
+	minetest.register_craft({
+		output = wrench_spec.mod_name .. ":wrench_" .. material .. "_r00",
+		recipe = {{"group:wrench_" .. material .. "_rot"}},
+		})
+	-- Convert positioning wrench (relative mode) to positioning wrench (absolute mode)
+	minetest.register_craft({
+		output = wrench_spec.mod_name .. ":wrench_" .. material .. "_a00",
+		recipe = {{"group:wrench_" .. material .. "_rpos"}},
+		})
+	-- Convert positioning wrench (absolute mode) to rotating wrench
+	minetest.register_craft({
+		output = wrench_spec.mod_name .. ":wrench_" .. material,
+		recipe = {{"group:wrench_" .. material .. "_apos"}},
+		})
+end
+
+local function register_crafting_helper()
 	-- When crafting a wrench from a wrench, keep its wear...
 	minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
-						if string.find(itemstack:get_name(), mod_name..":wrench_", 1, true) then
+						if known_wrenches[itemstack:get_name()] ~= nil then
 							local i, ingredient
 							for i = 1, 9 do
 								if old_craft_grid[i]:get_count() > 0 then
@@ -851,16 +809,100 @@ local function register_all_wrenches()
 									end
 								end
 							end
-							if string.find(ingredient:get_name(), mod_name..":wrench_", 1, true) then
+							if known_wrenches[itemstack:get_name()] ~= nil then
 								itemstack:set_wear(ingredient:get_wear())
 							end
 						end
 					end)
 end
+
+local registered_wrench_materials = {}
+
+----------------------------------
+------- API functions ------------
+----------------------------------
+
+local function register_wrench_recipe(material, ingredient)
+	if registered_wrench_materials[material] == nil then
+		error(string.format("[%s] rotate.register_wrench_recipe can only be used to define recipies for predefined wrenches - use rotate.register_wrench()"
+			,mod_name_upper))
+	end
+	if minetest.registered_nodes[ingredient] == nil and minetest.registered_items[ingredient] == nil then
+		minetest.log("error",string.format("[%s] rotate.register_wrench_recipe: ingredient '%s' is not registered in minetest",mod_name_upper, tostring(ingredient)))
+	end
+	-- This allows adding a new recipe for an existing wrench, but in the table, the
+	-- previous ingredient will be overwritten. That's no problem, as it won't be used anyway
+	registered_wrench_materials[material].ingredient = ingredient
+	minetest.register_craft({
+		output = mod_name .. ":wrench_" .. material,
+		recipe = make_recipe(ingredient, "")
+		})
+end
+
+local function register_wrench_raw(spec, override)
+	if spec.mod_name == nil or minetest.get_modpath(spec.mod_name) == nil then
+		minetest.log("error",string.format("[%s] %s.register_wrench: provided mod name '%s' does not exist",mod_name_upper, spec.mod_name))
+	end
+	if registered_wrench_materials[spec.material] ~= nil and not override then
+		minetest.log("error",string.format("[%s] %s.register_wrench: a wrench of material '%s' already exists",mod_name_upper, mod_name, tostring(spec.material)))
+		return
+	end
+	if spec.ingredient ~= nil and minetest.registered_nodes[spec.ingredient] == nil and minetest.registered_items[spec.ingredient] == nil then
+		minetest.log("error",string.format("[%s] %s.register_wrench(%s): ingredient '%s' is not registered in minetest",
+			mod_name_upper, mod_name, spec.material, tostring(spec.ingredient)))
+	end
+	if math.floor(spec.use_parameter) ~= spec.use_parameter then
+	    if spec.use_parameter <= 0 then
+		    error(string.format("[%s] %s.add_wrench: use factor is zero or less (%s)",mod_name_upper, mod_name, tostring(spec.use_parameter)))
+	    end
+	    spec.uses = spec.use_parameter * module.api_config.wrench_uses_steel
+	else
+	    if spec.use_parameter < 1 then
+		    error(string.format("[%s] %s.add_wrench: number of uses is less than 1 (%s)",mod_name_upper, mod_name, tostring(spec.use_parameter)))
+	    end
+	    -- Use ceil, so that it has at least one use
+	    spec.uses = spec.use_parameter
+	end
+	registered_wrench_materials[spec.material] = spec
+	register_new_wrench(spec)
+end
+
+local function register_wrench(mod_name, material, description, ingredient, use_parameter, override)
+	if type(mod_name) == "table" then
+		local param = mod_name
+		override = material
+		register_wrench_raw({
+			material = param.material.."",			-- make sure it's a string
+			description = param.description.."",		-- make sure it's a string
+			ingredient = param.ingredient,			-- may be nil
+			use_parameter = param.use_parameter + 0,	-- make sure it's a number
+			mod_name = param.mod_name.."",			-- make sure it's a string
+			}, override)
+	else
+		register_wrench_raw({
+			material = material.."",
+			description = description.."",
+			ingredient = ingredient,
+			use_parameter = use_parameter + 0,
+			mod_name = mod_name.."",
+			}, override)
+	end
+end
+
+
 --
--- Setup / initialize wrench mod
+-- Setup / initialize api
 --
+
+-- Export api
+module.api = {
+	register_wrench_recipe = register_wrench_recipe,
+	register_wrench = register_wrench,
+	-- FYI only. Not used by this module
+	wrench_uses_steel = module.wrenches_config.wrench_uses_steel,
+	}
+
 compute_wrench_orientation_codes()
 precompute_clockwise_rotations()
-register_all_wrenches()
+register_crafting_helper()
 
