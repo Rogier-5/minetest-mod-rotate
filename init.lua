@@ -24,6 +24,11 @@ local default_wrenches = {
 
 local mod_name = "rotate"
 
+local privilege_name
+-- Privilege associated with the wrench.
+-- privilege checking is disabled if set to nil (or false)
+--privilege_name = "twist"
+
 -- Choose recipe.
 -- Options:
 -- 	"beak_north"		-- may conflict with another wrench (technic ?)
@@ -63,6 +68,7 @@ module.api_config = {
 	alt_recipe = alt_recipe,
 	wrench_orientation_indicator = wrench_orientation_indicator,
 	wrench_uses_steel = wrench_uses_steel,
+	privilege_name = privilege_name,
 	}
 module.wrenches_config = {
 	default_wrenches = default_wrenches,

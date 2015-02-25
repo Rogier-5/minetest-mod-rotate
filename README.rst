@@ -65,7 +65,7 @@ The wrench has three major modes of operation:
 	.. image:: images/wrench_positioning_absolute_cube.png
 	.. image:: images/wrench_positioning_absolute_cube_2.png
 
-2) Positioning mode (relative)
+3) Positioning mode (relative)
 	In this mode, when punching a node, the node is rotated to a preconfigured
 	orientation with respect to the punched side and the player. I.e. if the wrench
 	is configured by right-clicking a specific side of a node, then when another
@@ -173,6 +173,12 @@ A rotation-mode wrench can also be crafted to a relative positioning mode wrench
 which can be crafted to an absolute positioning mode wrench, which can be crafted
 back to a rotation-mode wrench.
 
+Privilege
+---------
+
+Optionally, the use of the wrench can be made subject to a privilege, named 'twist'.
+This privilege is not enabled by default.
+
 API
 ---
 
@@ -279,8 +285,8 @@ intendend to be able to run on Windows (or anywhere else than on my system,
 for that matter :-) - although you are welcome to try).
 
 
-Other notes
------------
+Notes
+-----
 
 The operation of the wrench has been optimized: all required information is precomputed
 at startup. Actual operation of a wrench basically requires just a few table lookups.

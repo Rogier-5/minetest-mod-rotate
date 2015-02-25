@@ -475,6 +475,17 @@ local function creative_mode(player)
 		minetest.get_player_privs(player:get_player_name()).creative
 end
 
+local function register_rotation_privilege()
+	if module.api_config.privilege_name ~= nil then
+		minetest.register_privilege(module.api_config.privilege_name, "Can rotate nodes using the node rotation wrench")
+	end
+end
+
+local function has_rotation_privilege(player)
+	return module.api_config.privilege_name == nil
+		or minetest.get_player_privs(player:get_player_name())[module.api_config.privilege_name]
+end
+
 -- Check whether this is the same node as previously rotated
 -- (if so, return true, else false)
 -- and remember this node for the next time.
@@ -551,6 +562,10 @@ local function wrench_handler(itemstack, player, pointed_thing, mode, material, 
 
 	if minetest.is_protected(pos, player:get_player_name()) then
 		minetest.record_protection_violation(pos, player:get_player_name())
+		return
+	end
+	if not has_rotation_privilege(player) then
+		minetest.chat_send_player(player:get_player_name(),"You are not allowed to rotate nodes")
 		return
 	end
 
@@ -809,7 +824,7 @@ local function register_crafting_helper()
 									end
 								end
 							end
-							if known_wrenches[itemstack:get_name()] ~= nil then
+							if known_wrenches[ingredient:get_name()] ~= nil then
 								itemstack:set_wear(ingredient:get_wear())
 							end
 						end
@@ -902,7 +917,9 @@ module.api = {
 	wrench_uses_steel = module.wrenches_config.wrench_uses_steel,
 	}
 
+
 compute_wrench_orientation_codes()
 precompute_clockwise_rotations()
+register_rotation_privilege()
 register_crafting_helper()
 
