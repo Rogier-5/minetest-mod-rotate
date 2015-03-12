@@ -18,25 +18,25 @@ The wrench has three major modes of operation:
 
 1) Rotation mode.
 	In this mode, when punching a node, the node is rotated 90 degrees, the
-	direction depending on the selected sub-mode. The following sub-modes are
-	available:
+	direction depending on the selected rotation direction. The following
+	directions are available:
 
-	- clock-wise: rotate the node so that the punched side rotates clockwise
-	- counter-clock-wise: rotate the node so that the punched side rotates
+	- **clock-wise**: rotate the node so that the punched side rotates clockwise
+	- **counter-clock-wise**: rotate the node so that the punched side rotates
 	  counter-clockwise
-	- left: rotate the node so that the punched side moves to the left
-	- right: rotate the node so that the punched side moves to the right
-	- up: rotate the node so that the punched side moves upwards
-	- down: rotate the node so that the punched side moves downwards
+	- **left**: rotate the node so that the punched side moves to the left
+	- **right**: rotate the node so that the punched side moves to the right
+	- **up**: rotate the node so that the punched side moves upwards
+	- **down**: rotate the node so that the punched side moves downwards
 
-	The desired sub-mode is cycled by right-clicking. With the mode, the picture
-	of the wrench changes to indicate which mode is selected.
+	The configured direction is cycled by right-clicking. With the rotation direction,
+	the picture of the wrench changes to indicate the current direction.
 
 	As multiple rotations are most likely needed to correctly position a node,
 	subsequent rotations of the same node do not add additional wear to the wrench.
 	Punching 2 nodes alternatingly *does* add wear on every punch.
 
-	Submodes (none, clockwise, counter-clockwise, left, right up, down):
+	Wrench images for the different directions (none, clockwise, counter-clockwise, left, right up, down):
 
 	.. image:: images/wrench_copper.png
 	.. image:: images/wrench_copper_cw.png
