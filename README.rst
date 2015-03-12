@@ -52,6 +52,10 @@ The wrench has three major modes of operation:
 	of nodes, after rotation the sides will always be in the same direction (north,
 	east, south, west, up, down).
 
+	:Example: right-click a chest on any side. Say its front side was oriented east.
+		Then punch any other chest on any side. Now, that chest's front side will
+		also be towards the east.
+
 	This mode is selected by crafting a wrench into absolute positioning mode. It
 	can later be crafted into any other mode. See below.
 
@@ -71,16 +75,12 @@ The wrench has three major modes of operation:
 	is configured by right-clicking a specific side of a node, then when another
 	node is re-oriented, the punched side will match the punched side of the original
 	node (i.e. same side and same rotation).
-	For example, this can be used to ensure that chests have their locks facing
-	the correct side, by simply punching the chest once on the desired side.
 
 	The relative positioning mode is otherwise comparable to the absolute positioning
 	mode.
 
-	A note for the interested: the reference side of the relative positioning mode
-	is north. I.e. after right-clicking the north side of a node, the positioning
-	submode indicator (see below) of the absolute and of the relative wrench will
-	indicate the same.
+	:Example: right-click a chest on its front side. Then punch any chest on any side,
+		and the front side will rotate and take the place of the punched side.
 
 	Example images (see below for details):
 
@@ -113,24 +113,30 @@ Absolute and relative positioning wrenches ('axis_rot' representation):
 **Cube representation**
 
 The 'cube' orientation mode representation displays an exploded cube on a black
-background. In the top-right, a tiny dot indicates absolute mode (red) or relative
+background. In the top-right, a colored dot indicates absolute mode (red) or relative
 mode (blue).
+
 The cube itself has six colors, and one should imagine looking at it from the front.
 In the default orientation (axis=up and rotation=0), as seen from the north, the
-white face would be directly in front (i.e. north), the blue face would be on top,
-the brown face on the bottom, the red face on the right (west), the green face on
-the left (east) (just like for boats, airplanes, etc.), and the black (actually
-dark grey) face at the back (south).
+white face would be directly in front (i.e. north), the blue face (think: 'sky')
+would be on top, the brown face (think: 'earth') on the bottom, the red face on
+the right (west), the green face on the left (east) (think: port and starboard
+lights of boats, airplanes, etc.), and the black (actually dark grey) face would
+be at the back (south).
+
 If the wrench is in absolute positioning mode, any node punched will have the side
-corresponding to the center color ending up north, the side corresponding to the
-top color upwards, etc.
+corresponding to the center color of the exploded cube ending up north, the side
+corresponding to the upper color upwards, etc.
+
 E.g. if the center color is blue, the original top side will be facing north.
+
 If the wrench is in relative positioning mode, any node will have the side
 corresponding to the center color rotate to the place of the punched node (i.e.
-in front of the player). The side corresponding to the right color will be to
-the right of the player, etc.
-E.g. if if the center color is blue, the original top side will become the punched
-node (facing the player).
+facing the player). The side corresponding to the right color will be to the right
+of the player, etc.
+
+E.g. if the center color is blue, the original top side will take the place of the
+punched side (facing the player).
 
 Absolute and relative positioning wrenches ('cube' representation):
 
@@ -152,13 +158,11 @@ Exploded cube image (default orientation), and matching views of the node:
 Wrench materials
 ----------------
 
-Wrenches comes in four versions: wooden (optional), steel, copper, gold. The wooden
-wrench is exceptionally cheap, and wears very fast (approx. 10 uses). The steel
-wrench has approx 450 uses, the copper wrench approx. 1.5 times as many, the golden
-wrench approx 2 times as many. The number of uses of the steel wrench can be
-configured, automatically changing those of the copper and gold wrenches as well
-(but note that wrenches are expensive: they require 4 ingots, which is double the
-amount of a screwdriver).
+Wrenches come in four versions: wooden (optional), steel, copper, gold. The wooden
+wrench is exceptionally cheap, and wears very fast (approximately 10 uses). The steel
+wrench has approximately 450 uses, the copper wrench approximately 1.5 times as many,
+the golden wrench approximately 2 times as many. The number of uses of the steel wrench
+can be configured, automatically changing those of the copper and gold wrenches as well.
 
 Crafting
 --------
@@ -169,15 +173,15 @@ conflict with another mod, a few alternative recipies are available.
 .. image:: images/wrench_wood_crafting.png
 .. image:: images/wrench_copper_crafting.png
 
-A rotation-mode wrench can also be crafted to a relative positioning mode wrench,
-which can be crafted to an absolute positioning mode wrench, which can be crafted
-back to a rotation-mode wrench.
+In addition, a rotation-mode wrench can be crafted to a relative positioning mode wrench,
+which can be crafted to an absolute positioning mode wrench, which can be crafted back
+to a rotation-mode wrench.
 
 Privilege
 ---------
 
 Optionally, the use of the wrench can be made subject to a privilege, named 'twist'.
-This privilege is not enabled by default.
+This option is not enabled by default. It can be enabled in ``init.lua``.
 
 API
 ---
@@ -248,7 +252,7 @@ Alternative invocation of *register_wrench*; all wrench parameters are specified
 
 The number of configured uses for a steel wrench.
 
-This is a variable, provided for reference only - the rotate mod does *not* use it.
+This is a variable, provided for convenience only - the rotate mod does *not* use it.
 
 **Textures**
 
@@ -280,9 +284,9 @@ images; if an entry is added to the list of materials:
 and the script is run, the new images will have been created (and the others
 regenerated as well). Note that imagemagick is required for the script to function.
 
-The script is primarily provided for convenience. In particular, it is not
-intendend to be able to run on Windows (or anywhere else than on my system,
-for that matter :-) - although you are welcome to try).
+The script is provided 'as is', as an extra service only. In particular, it is not
+intendend to be able to run on Windows (or anywhere else than on my system, for that
+matter :-) - although you are welcome to try.
 
 
 Notes
@@ -291,7 +295,12 @@ Notes
 The operation of the wrench has been optimized: all required information is precomputed
 at startup. Actual operation of a wrench basically requires just a few table lookups.
 
-Most images used for the wrench were generated from a few base images. The script is
-and base images are included, for the interested party.
+Most images used for the wrench were generated from a few base images. The script and
+base images are included, for the interested party.
 
+A technical note for the interested party: the reference side of the relative
+positioning mode is north. I.e. after right-clicking a node with an absolute positioning
+wrench, and right-clicking the north side of that node with a relative positioning wrench,
+the positioning submode indicators of both wrenches will look the same, except of course
+for the colors of the red and blue pixels indicating absolute or relative mode.
 
