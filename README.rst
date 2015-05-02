@@ -6,10 +6,17 @@ of nodes much more intuitive.
 
 Different wrenches (wood, steel, copper, gold):
 
-.. image:: images/wrench_wood.png
-.. image:: images/wrench_steel.png
-.. image:: images/wrench_copper.png
-.. image:: images/wrench_gold.png
+.. image:: images/wrench_wood_16.png
+.. image:: images/wrench_steel_16.png
+.. image:: images/wrench_copper_16.png
+.. image:: images/wrench_gold_16.png
+
+High-resolution images (128x128):
+
+.. image:: textures/128/wrench_wood.png
+.. image:: textures/128/wrench_steel.png
+.. image:: textures/128/wrench_copper.png
+.. image:: textures/128/wrench_gold.png
 
 Modes of operation
 ------------------
@@ -38,13 +45,27 @@ The wrench has three major modes of operation:
 
 	Wrench images for the different directions (none, clockwise, counter-clockwise, left, right up, down):
 
-	.. image:: images/wrench_copper.png
-	.. image:: images/wrench_copper_cw.png
-	.. image:: images/wrench_copper_ccw.png
-	.. image:: images/wrench_copper_left.png
-	.. image:: images/wrench_copper_right.png
-	.. image:: images/wrench_copper_up.png
-	.. image:: images/wrench_copper_down.png
+	.. image:: images/wrench_copper_16.png
+	.. image:: images/wrench_copper_cw_16.png
+	.. image:: images/wrench_copper_ccw_16.png
+	.. image:: images/wrench_copper_left_16.png
+	.. image:: images/wrench_copper_right_16.png
+	.. image:: images/wrench_copper_up_16.png
+	.. image:: images/wrench_copper_down_16.png
+
+	High resolution versions of the wrench:
+
+	.. image:: textures/128/wrench_copper.png
+	.. image:: textures/128/wrench_copper_cw.png
+	.. image:: textures/128/wrench_copper_ccw.png
+	.. image:: textures/128/wrench_copper_left.png
+	.. image:: textures/128/wrench_copper_right.png
+	.. image:: textures/128/wrench_copper_up.png
+	.. image:: textures/128/wrench_copper_down.png
+
+	The high resolution images can be found in the directory ``textures/128``. To
+	use them, copy them from the ``textures/128`` directory to the ``textures``
+	directory, or copy the ``textures/128`` directory into a texture pack.
 
 2) Positioning mode (absolute)
 	In this mode, when punching a node, the node is rotated to a preconfigured
@@ -281,8 +302,9 @@ images; if an entry is added to the list of materials:
 		mithril #313196 100
 		"
 
-and the script is run, the new images will have been created (and the others
-regenerated as well). Note that imagemagick is required for the script to function.
+and the script is run, 18x18 and 128x128 images will have been created for the new
+wrenches (and all other images will have been regenerated as well). Note that imagemagick
+is required for the script to function.
 
 The script is provided 'as is', as an extra service only. In particular, it is not
 intendend to be able to run on Windows (or anywhere else than on my system, for that

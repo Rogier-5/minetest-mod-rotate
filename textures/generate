@@ -10,8 +10,10 @@
 #
 
 if ! { test -f generate \
-	&& test -f wrench_master_diagonal.png \
-	&& test -f wrench_master_horizontal.png; }; then
+	&& test -f wrench_master_diagonal_16.png \
+	&& test -f wrench_master_horizontal_16.png \
+	&& test -f wrench_master_diagonal_128.png \
+	&& test -f wrench_master_horizontal_128.png; }; then
     echo "The generate script must be run inside the textures directory" 1>&2
     exit 1
 fi
@@ -26,13 +28,28 @@ materials="
 echo "$materials" \
 | while read material color tint; do
     if [ -z "$material" ]; then continue; fi
-    convert wrench_master_diagonal.png -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}.png"
-    convert wrench_master_horizontal.png -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}_left.png"
-    convert "wrench_${material}.png" -rotate -90 "wrench_${material}_cw.png"
-    convert "wrench_${material}_cw.png" -flop "wrench_${material}_ccw.png"
-    convert "wrench_${material}_left.png" -flop "wrench_${material}_right.png"
-    convert "wrench_${material}_left.png" -rotate -90 "wrench_${material}_down.png"
-    convert "wrench_${material}_right.png" -rotate -90 "wrench_${material}_up.png"
+    for set in "" "128"; do
+	if [ -z "$set" ]; then
+	    suffix="_16"
+	    dir="."
+	    convert "wrench_master_diagonal${suffix}.png" -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}.png"
+	    convert "wrench_master_horizontal${suffix}.png" -fill "$color" -tint "$tint" -bordercolor none -border 1 "wrench_${material}_left.png"
+	else
+	    suffix="${set:+_$set}"
+	    dir="$set/"
+	    mkdir -p "$dir"
+	    convert "wrench_master_diagonal${suffix}.png" -fill "$color" -tint "$tint" "${dir}/wrench_${material}.png"
+	    convert "wrench_master_horizontal${suffix}.png" -fill "$color" -tint "$tint" "${dir}/wrench_${material}_left.png"
+	fi
+	(
+	    cd "$dir"
+	    convert "wrench_${material}.png" -rotate -90 "wrench_${material}_cw.png"
+	    convert "wrench_${material}_cw.png" -flop "wrench_${material}_ccw.png"
+	    convert "wrench_${material}_left.png" -flop "wrench_${material}_right.png"
+	    convert "wrench_${material}_left.png" -rotate -90 "wrench_${material}_down.png"
+	    convert "wrench_${material}_right.png" -rotate -90 "wrench_${material}_up.png"
+	    )
+    done
 done
 
 #
@@ -43,6 +60,7 @@ modes="
 	apos	RGB(200,16,16)
 	rpos	RGB(32,32,255)
 	"
+
 echo "$modes" \
 | while read mode rgb; do
     if [ -z "$mode" ]; then continue; fi
@@ -158,6 +176,15 @@ echo "$cube_sides" \
     done
 done
 
+# Nothing fancy for mode images for 128x128 resolution - just scale to desired size
+for file in wrench_axismode_*.png wrench_rotmode_*.png wrench_mode_*.png; do
+    convert "$file" \
+        -crop 16x16+2+0 \
+	-scale 700% \
+	-background none -gravity northeast -extent 128x128 \
+	"128/$file"
+done
+
 images="
 	wrench_wood.png
 	wrench_steel.png
@@ -178,7 +205,7 @@ echo "$images" \
     convert \
 	"$file" \
 	-scale 400% \
-	"../images/$file"
+	"../images/${file%.png}_16.png"
 done
 
 
